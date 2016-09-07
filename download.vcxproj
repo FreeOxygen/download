@@ -160,11 +160,13 @@
     <ClInclude Include="urlStart.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="config.txt" />
     <Text Include="url.txt" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="libmysql.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

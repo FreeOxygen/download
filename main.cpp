@@ -17,10 +17,10 @@ using std::vector;
 //------------------- function -------------
 int main()
 {
-	int result;
 	int i = 1;
-	init_config();
-	open_xunlei();
+	init_config();//初始化配置参数
+	open_xunlei();//启动迅雷
+	cout << "迅雷启动成功:" << endl;
 	initMysql();
 	vector<char*> vec = UrlRead(config.urlPath);
 	cout << "共加载：" << vec.size() << endl;//获得判断出来的有用条数
@@ -28,7 +28,7 @@ int main()
 	while (v != vec.end())
 	{
 		cout << *v << endl;
-		result = urlStart(i, *v);
+		urlStart(i, *v);
 		delete *v;
 		v++;
 		i++;
