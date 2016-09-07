@@ -1,4 +1,4 @@
-xunlei=C:\Users\Peter\Desktop\xunlei.lnk
+xunlei=D:\xunlei\Program\Thunder.exe
 urlPath=url.txt
 savePath=D:\haha
 url_mold_1=^(http://).*(\\.\\w+)+

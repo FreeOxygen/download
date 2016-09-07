@@ -20,6 +20,7 @@ int main()
 	int result;
 	int i = 1;
 	init_config();
+	open_xunlei();
 	initMysql();
 	vector<char*> vec = UrlRead(config.urlPath);
 	cout << "共加载：" << vec.size() << endl;//获得判断出来的有用条数

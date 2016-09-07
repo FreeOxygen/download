@@ -4,7 +4,6 @@
 void keyboardInput(char* value);
 void getInfo();
 int urlStart(int urlNum,char* url);
-void getPos(int* x,int* y);
-void getText(char* title);
+void open_xunlei();
 
 #endif
