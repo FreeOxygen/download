@@ -1,5 +1,5 @@
 xunlei=D:\xunlei\Program\Thunder.exe
-urlPath=url.txt
+urlPath=.\url
 savePath=D:\haha
 url_mold_1=^(http://).*(\\.\\w+)+
 url_mold_2=ftp://[^\\s]*

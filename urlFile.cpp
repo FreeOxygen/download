@@ -5,41 +5,115 @@
 #include <vector>
 #include "config.h"
 #include "urlFile.h"
+#include "urlSource.h"
 using namespace std;
 using std::vector;
 
-
+ifstream fin;
+char filename[1024];
 //------------------- function --------------
 /*
-读取文件中的URL
+打开一个url文件
 fileName 读取文件的路径
 */
-vector<char*> UrlRead(char* fileName)
+int open_urlFile(char* fileName)
 {
-	char* buffer;
-	vector<char*> ver;//存储满足条件的URl
-	ifstream fin;
 	fin.open(fileName);
 	if (!fin.is_open())
 	{
-		cout << "***************" << "加载URL文件错误" << "**************" << endl;
-		system("pause");
-		exit(0);
+		cout << "***************" << "文件打开错误" << "**************" << endl;
+		return 0;
 	}
 	else
 	{
-		while (!fin.eof())
+		strcpy(filename, fileName);
+		cout << "url文件:" << fileName << "--打开成功!" << endl;
+		return 1;
+	}
+}
+
+int read_url(char * readUrl)
+{
+	char buffer[1024];
+	if (fin.is_open())//文件已经打开
+	{
+		if (!fin.eof())
 		{
-			buffer = new char[1024];
 			fin.getline(buffer, 1024);
-			if(is_url_valid(buffer))
+			while (!is_url_valid(buffer))
 			{
-				//cout << buffer << endl;
-				ver.push_back(buffer);
+				if (fin.eof()) //文件已经读完
+				{
+					//删除文件
+					fin.close();
+					remove(filename);//删除已经读取完成的文件
+					if (find_new_file(config.urlPath))//查找新的文件
+					{
+						char tmpBuf[1024];
+						if (read_url(tmpBuf))
+						{
+							strcpy(readUrl, tmpBuf);
+							return 1;
+						}
+						else
+						{
+							return 0;
+						}
+					}
+					else
+					{
+						return 0;
+					}
+				}
+				fin.getline(buffer, 1024);
+			}
+			strcpy(readUrl, buffer);
+			return 1;
+		}
+		else
+		{
+			//删除文件
+			fin.close();
+			remove(filename);//删除已经读取完成的文件
+			if (find_new_file(config.urlPath))//查找新的文件
+			{
+				char tmpBuf[1024];
+				if (read_url(tmpBuf))
+				{
+					strcpy(readUrl, tmpBuf);
+					return 1;
+				}
+				else
+				{
+					return 0;
+				}
+			}
+			else
+			{
+				return 0;
 			}
 		}
 	}
-	return ver;
+	else
+	{
+		if (find_new_file(config.urlPath))//查找新的文件
+		{
+			char tmpBuf[1024];
+			if (read_url(tmpBuf))
+			{
+				strcpy(readUrl, tmpBuf);
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		else
+		{
+			return 0;
+		}
+	}
 }
 /*
 判断url是否是有效的
@@ -53,7 +127,7 @@ bool is_url_valid(char* url)
 	regex ED2K_Mold(config.url_mold_4);//"(ed2k://\\|file\\|){1}.*");//电驴格式下载
 	switch (1)//进行判断url是否满足允许的协议
 	{
-	case 1 :
+	case 1:
 		if (regex_match(url, http_Mold))
 		{
 			return true;

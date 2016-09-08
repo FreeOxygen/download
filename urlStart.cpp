@@ -143,7 +143,7 @@ int urlStart(int urlNum, char* url)
 		newHwnd = FindWindow(NULL,"新建下载");//得到新建下载的句柄
 		if (tmp > 10000) 
 		{
-			cout << "错误" << endl;
+			cout << "*********新建任务错误**********" << endl;
 			return 0;
 		}
 	} while (newHwnd == NULL && !IsWindowVisible(newHwnd));
@@ -158,7 +158,7 @@ int urlStart(int urlNum, char* url)
 		cont++;
 		if (cont > 1000) 
 		{
-			cout << "erro!" << endl;
+			cout << "*************新建窗口错误***********" << endl;
 			return 0;
 		}
 	}

@@ -30,6 +30,9 @@
     <ClCompile Include="urlStart.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="urlSource.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h">
@@ -42,6 +45,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="urlMysql.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="urlSource.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

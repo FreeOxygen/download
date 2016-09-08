@@ -187,22 +187,25 @@ int fileState(const char * Path, char * find_rule)
 		{
 			if (strcmp(findFile.name, ".") == 0 || strcmp(findFile.name, "..") == 0)
 			{
-				char dir[255];
-				time_t dir_time;
-				time_t now_time;
-				now_time = time(NULL);//获得现在的时间
-				strcpy(dir, (strrchr(Path, '\\') + 1));
-				gitDirTime(dir, dir_time);//获得创建下载的时间
-				double a = difftime(now_time, dir_time);
-				if (a > 86400)//文件下载超过24小时（86400），判断为下载失败
+				if (strcmp(Path, config.savePath) != 0)
 				{
-					files file;
-					strcpy(file.dir, dir);
-					strcpy(file.file_state, "2");
-					updata_file(file);
-					cout << "下载超时！！" << endl;
+					char dir[255];
+					time_t dir_time;
+					time_t now_time;
+					now_time = time(NULL);//获得现在的时间
+					strcpy(dir, (strrchr(Path, '\\') + 1));
+					gitDirTime(dir, dir_time);//获得创建下载的时间
+					double a = difftime(now_time, dir_time);
+					if (a > 86400)//文件下载超过24小时（86400），判断为下载失败
+					{
+						files file;
+						strcpy(file.dir, dir);
+						strcpy(file.file_state, "2");
+						updata_file(file);
+						cout << "下载超时！！" << endl;
+					}
+					cout << dir << "--->文件夹中没有文件" << endl;
 				}
-				cout << "文件夹中没有文件" << endl;
 			}
 		}
 		_findclose(hFile);

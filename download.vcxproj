@@ -151,12 +151,14 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="urlFile.cpp" />
     <ClCompile Include="urlMysql.cpp" />
+    <ClCompile Include="urlSource.cpp" />
     <ClCompile Include="urlStart.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h" />
     <ClInclude Include="urlFile.h" />
     <ClInclude Include="urlMysql.h" />
+    <ClInclude Include="urlSource.h" />
     <ClInclude Include="urlStart.h" />
   </ItemGroup>
   <ItemGroup>
