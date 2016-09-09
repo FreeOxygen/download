@@ -5,17 +5,12 @@
 #include "urlFile.h"
 using namespace std;
 
-//---------------- function -----------
-/*
-	判断是否有性文件
-	
-*/
-
+//--------------- function ------------
 int find_new_file(const char * Path)
 {
 	char findPath[1024];
 	strcpy(findPath, Path);
-	strcat(findPath, "\\*");
+	strcat(findPath, "/*");
 
 	_finddata_t findFile;//获取得到的文件信息
 
@@ -38,7 +33,7 @@ int find_new_file(const char * Path)
 			{
 				char tmp[1024];
 				strcpy(tmp, Path);
-				strcat(tmp, "\\");
+				strcat(tmp, "/");
 				strcat(tmp, findFile.name);
 				if (open_urlFile(tmp))//文件打开成功
 				{
@@ -49,7 +44,7 @@ int find_new_file(const char * Path)
 			}
 		} while (_findnext(hFile, &findFile) == 0);
 		_findclose(hFile);
-		cout << "没有新文件" << endl;
+		cout << "********文件夹中没有新的URL文件*******" << endl;
 		return 0;
 	}
 }

@@ -5,15 +5,12 @@
 #include <iostream>
 #include <windows.h>
 #include <winuser.h>
-#include <regex>
 #include "urlStart.h"
 #include "config.h"
 #include "urlMysql.h"
 #include "urlFile.h"
 #include "urlSource.h"
 using namespace std;
-using std::vector;
-///状态中0为完成，1为正在下载，2为下载错误，3为无效链接
 
 //------------------- function -------------
 int main()
@@ -28,11 +25,15 @@ int main()
 	while (1) //检测文件是否下载完成
 	{
 		char url[1024];
-		if (read_url(url))
+		url_info info;
+		if (read_url(info))
 		{
 			i++;
-			cout << url << endl;
-			urlStart(i, url);
+			cout << info.url << endl;
+			urlStart(i, info);
+			info.DJID = i;
+			info.JID = i;
+			add_DL(info);
 		}
 		fileState(config.savePath);
 		Sleep(2000);

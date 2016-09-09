@@ -5,7 +5,6 @@
 #include <io.h>
 #include <stdio.h> 
 #include <stdlib.h> 
-#include <string>
 #include <time.h>
 #include "config.h"
 #include "urlMysql.h"
@@ -22,7 +21,7 @@ void initMysql()
 {
 	mysql_init(&con);
 
-	if (NULL != &con && mysql_real_connect(&con, config.host, config.user , config.passwd, config.dbName, 3306, NULL, 0))
+	if (NULL != &con && mysql_real_connect(&con, config.host, config.user, config.passwd, config.dbName, 3306, NULL, 0))
 	{
 		cout << "连接成功" << endl;
 	}
@@ -44,12 +43,48 @@ void insert_file(files &file)
 		printf("%s executed!!!\n", sql.c_str());
 	}
 }
-//更新数据库中的文件
-void updata_file(files& file)
+
+/*
+将添加的下载任务，添加到数据库
+*/
+void add_DL(url_info & info)
 {
-	char sql[1024];
+	char sql[1024] = "";
 	int rt;
-	sprintf(sql, "update test set file_name = \"%s\",file_time = \"%s\",file_hash = \"%s\",file_state = \"%s\" where dir = \"%s\"", file.file_name, +file.file_time, +file.file_hash, file.file_state, file.dir);
+	sprintf(sql, "insert into ecd_dl_job (DJID,JID,URL,FILEPATH,PROTOCOL,STATE,REMARK,START_TIME,TOOL) values(%d,%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")", info.DJID, info.JID, info.url, info.filepath,
+		getProtocol(info.protocol), getState(info.state), info.remark, info.start_time, info.tool);
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+}
+//更新数据库中的文件
+void updata_FAIL(url_info& info)
+{
+	char sql[1024] = "update ecd_dl_job set STATE = \"%s\",REMARK=\"%s\" where FILEPATH = \"%s\"";
+	int rt;
+	sprintf(sql, "update ecd_dl_job set STATE = \"%s\",REMARK=\"%s\" where FILEPATH = \"%s\"", getState(info.state),info.remark,info.filepath);
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+}
+//更新完成状态
+void updata_success(url_info & info)
+{
+	char sql[1024] = "update ecd_dl_job set FILENAME = \"%s\",FILESIZE = %d,STATE = \"%s\",END_TIME = \"%s\"where FILEPATH =\"123\"";
+	int rt;
+	sprintf(sql, "update ecd_dl_job set FILENAME = \"%s\",FILESIZE = %d,STATE = \"%s\",END_TIME = \"%s\"where FILEPATH =\"%s\"", info.filename, info.filesize, getState(info.state), info.end_time, info.filepath);
 	rt = mysql_real_query(&con, sql, strlen(sql));
 	if (rt)
 	{
@@ -112,7 +147,7 @@ int fileState(const char * Path, char * find_rule)
 	char findPath[1024];
 	int rt = 0;
 	strcpy(findPath, Path);
-	strcat(findPath, "\\");
+	strcat(findPath, "/");
 	strcat(findPath, find_rule);//设置查找全部文件
 
 	_finddata_t findFile;//获取得到的文件信息
@@ -121,7 +156,7 @@ int fileState(const char * Path, char * find_rule)
 
 	if ((hFile = _findfirst(findPath, &findFile)) == -1L)
 	{
-		cout << "没有该文件" << endl;
+		cout << findPath << "没有该文件" << endl;
 		rt = -1;
 	}
 	else {
@@ -133,10 +168,10 @@ int fileState(const char * Path, char * find_rule)
 				{
 					//查询子目录
 					strcpy(findPath, Path);
-					strcat(findPath, "\\");
+					strcat(findPath, "/");
 					strcat(findPath, findFile.name);
 					//判断是否有.cfg文件，有正在下载的文件
-					if (-1 == fileState(findPath, "*.cfg"))//文件没有开始下载或下载完成
+					if (-1 == fileState(findPath, "*.xltd"))//文件没有开始下载或下载完成
 					{
 						fileState(findPath);//是否有文件
 					}
@@ -147,14 +182,18 @@ int fileState(const char * Path, char * find_rule)
 						time_t dir_time;
 						time_t	now_time;
 						now_time = time(NULL);//获得现在的时间
-						gitDirTime(findFile.name, dir_time);//获得创建下载的时间
+						char tmp[24];
+						strncpy(tmp, findPath + (strlen(config.savePath)+1), 23);//
+						getDirTime(tmp, dir_time);//获得创建下载的时间
 						double a = difftime(now_time, dir_time);
-						if (a > 86400)//文件下载超过24小时（86400），判断为下载失败
+						if (a > 240)//文件下载超过24小时（86400），判断为下载失败
 						{
-							files file;
-							strcpy(file.dir, findFile.name);
-							strcpy(file.file_state, "2");
-							updata_file(file);
+
+							url_info info;
+							strncpy(info.filepath, findPath, strlen(config.savePath) + strlen(tmp) + 1);
+							info.state = DL_FAIL;
+							strcpy(info.remark, "Download timeout !");
+							updata_FAIL(info);
 							cout << "下载超时！！" << endl;
 						}
 					}
@@ -172,13 +211,15 @@ int fileState(const char * Path, char * find_rule)
 				{
 					if (1)//可以判断文件后缀
 					{
-						files file;
-						strcpy(file.dir, (strrchr(Path, '\\') + 1));//文件夹名称
-						strcpy(file.file_name, findFile.name);//下载文件名称
+						url_info info;
+						strncpy(info.filepath, Path, strlen(config.savePath) + 24);//文件存储路径
+						strcpy(info.filename, findFile.name);
+						info.filesize = findFile.size;//文件的大小
 						tm * t = localtime(&findFile.time_write);//获取文件最后修改时间
-						strftime(file.file_time, 64, "%Y-%m-%d-%H-%M-%S", t);
-						strcpy(file.file_state, "0");
-						updata_file(file);
+						strftime(info.end_time, 64, "%Y-%m-%d %H:%M:%S", t);
+						info.state = DL_SUCCESS;//更新状态
+						strcpy(info.remark, "OK!");
+						updata_success(info);
 					}
 				}
 			}
@@ -193,19 +234,21 @@ int fileState(const char * Path, char * find_rule)
 					time_t dir_time;
 					time_t now_time;
 					now_time = time(NULL);//获得现在的时间
-					strcpy(dir, (strrchr(Path, '\\') + 1));
-					gitDirTime(dir, dir_time);//获得创建下载的时间
+					strcpy(dir, (strrchr(Path, '/') + 1));
+					getDirTime(dir, dir_time);//获得创建下载的时间
 					double a = difftime(now_time, dir_time);
-					if (a > 86400)//文件下载超过24小时（86400），判断为下载失败
+					if (a > 240)//文件下载超过24小时（86400），判断为下载失败
 					{
-						files file;
-						strcpy(file.dir, dir);
-						strcpy(file.file_state, "2");
-						updata_file(file);
-						cout << "下载超时！！" << endl;
+						url_info info;
+						strcpy(info.filepath, Path);
+						info.state = DL_FAIL;
+						strcpy(info.remark, "Link timeout !");
+						updata_FAIL(info);
+						cout << "链接超时超时！！" << endl;
 					}
 					cout << dir << "--->文件夹中没有文件" << endl;
 				}
+				cout << "find file***********没有下载文件********" << endl;
 			}
 		}
 		_findclose(hFile);
@@ -213,12 +256,22 @@ int fileState(const char * Path, char * find_rule)
 	return rt;
 }
 //获得文件创建时间
-void gitDirTime(char* dir, time_t& dir_time)
+void getDirTime(char* dir, time_t& dir_time)
 {
 	tm tm_;
-	string tmp((strchr(dir, '_') + 1), (strrchr(dir, '_')));
+	char tmpDir[256];
+	char tmp[256];
+	strcpy(tmpDir, dir);
+	strtok(tmpDir, "_");
+	strcpy(tmp, tmpDir);//年月日
+	strcat(tmp, "-");
+	strcat(tmp, strtok(NULL, "_"));//时
+	strcat(tmp, "-");
+	strcat(tmp, strtok(NULL, "_"));//分
+	strcat(tmp, "-");
+	strcat(tmp, strtok(NULL, "_"));//秒
 	int year, month, day, hour, minute, second;
-	sscanf(tmp.c_str(), "%d-%d-%d-%d-%d-%d", &year, &month, &day, &hour, &minute, &second);
+	sscanf(tmp, "%d-%d-%d-%d-%d-%d", &year, &month, &day, &hour, &minute, &second);
 
 	tm_.tm_year = year - 1900;
 	tm_.tm_mon = month - 1;
@@ -228,4 +281,35 @@ void gitDirTime(char* dir, time_t& dir_time)
 	tm_.tm_sec = second;
 	tm_.tm_isdst = 0;
 	dir_time = mktime(&tm_);
+}
+
+//将状态转化为字符串
+char * getState(DL_state & dl_state)
+{
+	switch (dl_state)
+	{
+	case DL_WAIT:
+		return "DL_WAIT";
+	case DL_RUN:
+		return "DL_RUN";
+	case DL_FAIL:
+		return "DL_FAIL";
+	case DL_SUCCESS:
+		return "DL_SUCCESS";
+	}
+}
+//获得下载协议
+char * getProtocol(DL_protocol & dl_protocol)
+{
+	switch (dl_protocol)
+	{
+	case http_https:
+		return "http_https";
+	case magnet:
+		return "magnet";
+	case ED2K:
+		return "ED2K";
+	case ftp:
+		return "ftp";
+	}
 }

@@ -34,8 +34,9 @@ void  init(char* name, char* path)
 	{
 		if (strstr(temp, name))
 		{
-			strtok(temp, "=");
-			strcpy(temp2, strtok(NULL, "="));
+			/*strtok(temp, "=");
+			strcpy(temp2, strtok(NULL, "="));*/
+			strcpy(temp2, (strchr(temp,'=') + 1));
 			int i;
 			for (i = 0; i < 126; i++) {
 
