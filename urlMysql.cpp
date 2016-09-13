@@ -1,4 +1,4 @@
-/////----------  include -------------------------
+ï»¿/////----------  include -------------------------
 #include <iostream>
 #include <WinSock2.h>
 #include <Windows.h>
@@ -6,7 +6,6 @@
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <time.h>
-#include "config.h"
 #include "urlMysql.h"
 #include "include\mysql.h"
 
@@ -16,246 +15,30 @@ using namespace std;
 
 /////---------------- gloable variable ----------
 MYSQL con;
-//extern Config config;
+MYSQL_RES * res;//è¿”å›çš„ç»“æœé›†
+
+//------------------- functions ---------------
 void initMysql()
 {
 	mysql_init(&con);
 
 	if (NULL != &con && mysql_real_connect(&con, config.host, config.user, config.passwd, config.dbName, 3306, NULL, 0))
 	{
-		cout << "Á¬½Ó³É¹¦" << endl;
-	}
-}
-
-//Êı¾İ¿âÖĞÌí¼ÓÎÄ¼ş
-void insert_file(files &file)
-{
-	string sql = "insert into test(dir, file_name, file_time, file_hash, file_state) values(\"";
-	int rt;
-	sql = sql + file.dir + "\",\"" + file.file_name + "\",\"" + file.file_time + "\",\"" + file.file_hash + "\",\'" + file.file_state + "\')";
-	rt = mysql_real_query(&con, sql.c_str(), strlen(sql.c_str()));
-	if (rt)
-	{
-		printf("Error making query: %s !!!\n", mysql_error(&con));
+		//if (mysql_set_character_set(&con, "utf-8"))
+		//{
+		//	cout << "è®¾ç½®æˆåŠŸ" << endl;
+		//}
+		cout << "è¿æ¥æˆåŠŸ" << endl;
 	}
 	else
 	{
-		printf("%s executed!!!\n", sql.c_str());
+		cout << "è¿æ¥é”™è¯¯:" << mysql_error(&con) << endl;
+		getchar();
+		exit(0);
 	}
 }
 
-/*
-½«Ìí¼ÓµÄÏÂÔØÈÎÎñ£¬Ìí¼Óµ½Êı¾İ¿â
-*/
-void add_DL(url_info & info)
-{
-	char sql[1024] = "";
-	int rt;
-	sprintf(sql, "insert into ecd_dl_job (DJID,JID,URL,FILEPATH,PROTOCOL,STATE,REMARK,START_TIME,TOOL) values(%d,%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")", info.DJID, info.JID, info.url, info.filepath,
-		getProtocol(info.protocol), getState(info.state), info.remark, info.start_time, info.tool);
-	rt = mysql_real_query(&con, sql, strlen(sql));
-	if (rt)
-	{
-		printf("Error making query: %s !!!\n", mysql_error(&con));
-	}
-	else
-	{
-		printf("%s executed!!!\n", sql);
-	}
-}
-//¸üĞÂÊı¾İ¿âÖĞµÄÎÄ¼ş
-void updata_FAIL(url_info& info)
-{
-	char sql[1024] = "update ecd_dl_job set STATE = \"%s\",REMARK=\"%s\" where FILEPATH = \"%s\"";
-	int rt;
-	sprintf(sql, "update ecd_dl_job set STATE = \"%s\",REMARK=\"%s\" where FILEPATH = \"%s\"", getState(info.state),info.remark,info.filepath);
-	rt = mysql_real_query(&con, sql, strlen(sql));
-	if (rt)
-	{
-		printf("Error making query: %s !!!\n", mysql_error(&con));
-	}
-	else
-	{
-		printf("%s executed!!!\n", sql);
-	}
-}
-//¸üĞÂÍê³É×´Ì¬
-void updata_success(url_info & info)
-{
-	char sql[1024] = "update ecd_dl_job set FILENAME = \"%s\",FILESIZE = %d,STATE = \"%s\",END_TIME = \"%s\"where FILEPATH =\"123\"";
-	int rt;
-	sprintf(sql, "update ecd_dl_job set FILENAME = \"%s\",FILESIZE = %d,STATE = \"%s\",END_TIME = \"%s\"where FILEPATH =\"%s\"", info.filename, info.filesize, getState(info.state), info.end_time, info.filepath);
-	rt = mysql_real_query(&con, sql, strlen(sql));
-	if (rt)
-	{
-		printf("Error making query: %s !!!\n", mysql_error(&con));
-	}
-	else
-	{
-		printf("%s executed!!!\n", sql);
-	}
-}
-
-int findFileForSql(string dir, files & file)
-{
-	MYSQL_RES * res;
-	MYSQL_ROW row;
-	int rows = 0;
-	string sql = "select * from test where dir = \"";
-	sql += dir + "\"";
-	int rt = mysql_real_query(&con, sql.c_str(), strlen(sql.c_str()));
-	if (rt)
-	{
-		printf("Error making query: %s !!!\n", mysql_error(&con));
-	}
-	else
-	{
-		printf("%s executed!!!\n", sql.c_str());
-	}
-	res = mysql_store_result(&con);//È¡µÃ²éÑ¯½á¹û
-	while (row = mysql_fetch_row(res))
-	{
-		strcpy(file.dir, row[1]);
-		strcpy(file.file_name, row[2]);
-		strcpy(file.file_time, row[3]);
-		strcpy(file.file_hash, row[4]);
-		strcpy(file.file_state, row[5]);
-		row++;
-	}
-	if (0 == rows)
-	{
-		cout << "Ã»ÓĞÕÒµ½ĞĞ" << endl;
-		mysql_free_result(res);//ÊÍ·Åres×ÊÔ´
-		return 0;
-	}
-	else
-	{
-		cout << file.dir << "|" << file.file_name << "|" << file.file_state << endl;
-		mysql_free_result(res);//ÊÍ·Åres×ÊÔ´
-		return rows;
-	}
-}
-
-/*
-µİ¹é²éÑ¯ÎÄ¼ş
-Path ²éÕÒµÄÂ·¾¶
-find_rule ²éÕÒµÄ¹æÔò,Ä¬ÈÏÎª*
-return 0 Ã»ÓĞÎÄ¼ş£¬1 ´æÔÚÎÄ¼ş,-1 ÎÄ¼ş²»´æÔÚ
-*/
-int fileState(const char * Path, char * find_rule)
-{
-	char findPath[1024];
-	int rt = 0;
-	strcpy(findPath, Path);
-	strcat(findPath, "/");
-	strcat(findPath, find_rule);//ÉèÖÃ²éÕÒÈ«²¿ÎÄ¼ş
-
-	_finddata_t findFile;//»ñÈ¡µÃµ½µÄÎÄ¼şĞÅÏ¢
-
-	intptr_t hFile;//²éÕÒµ½µÄÎÄ¼ş¾ä±ú
-
-	if ((hFile = _findfirst(findPath, &findFile)) == -1L)
-	{
-		cout << findPath << "Ã»ÓĞ¸ÃÎÄ¼ş" << endl;
-		rt = -1;
-	}
-	else {
-
-		do {
-			if (findFile.attrib & _A_SUBDIR) //²éÑ¯µ½µÄÎªÎÄ¼ş
-			{
-				if (strcmp(findFile.name, ".") != 0 && strcmp(findFile.name, "..") != 0)
-				{
-					//²éÑ¯×ÓÄ¿Â¼
-					strcpy(findPath, Path);
-					strcat(findPath, "/");
-					strcat(findPath, findFile.name);
-					//ÅĞ¶ÏÊÇ·ñÓĞ.cfgÎÄ¼ş£¬ÓĞÕıÔÚÏÂÔØµÄÎÄ¼ş
-					if (-1 == fileState(findPath, "*.xltd"))//ÎÄ¼şÃ»ÓĞ¿ªÊ¼ÏÂÔØ»òÏÂÔØÍê³É
-					{
-						fileState(findPath);//ÊÇ·ñÓĞÎÄ¼ş
-					}
-					else
-					{
-						//ÕıÔÚÏÂÔØÎÄ¼ş´¦Àí
-						//ÅĞ¶ÏÊÇ·ñÏÂÔØ³¬Ê±
-						time_t dir_time;
-						time_t	now_time;
-						now_time = time(NULL);//»ñµÃÏÖÔÚµÄÊ±¼ä
-						char tmp[24];
-						strncpy(tmp, findPath + (strlen(config.savePath)+1), 23);//
-						getDirTime(tmp, dir_time);//»ñµÃ´´½¨ÏÂÔØµÄÊ±¼ä
-						double a = difftime(now_time, dir_time);
-						if (a > 240)//ÎÄ¼şÏÂÔØ³¬¹ı24Ğ¡Ê±£¨86400£©£¬ÅĞ¶ÏÎªÏÂÔØÊ§°Ü
-						{
-
-							url_info info;
-							strncpy(info.filepath, findPath, strlen(config.savePath) + strlen(tmp) + 1);
-							info.state = DL_FAIL;
-							strcpy(info.remark, "Download timeout !");
-							updata_FAIL(info);
-							cout << "ÏÂÔØ³¬Ê±£¡£¡" << endl;
-						}
-					}
-				}
-				else
-				{
-					continue;
-				}
-			}
-			else
-			{
-				rt++;
-				//²éÑ¯µ½ÎÄ¼ş
-				if (strcmp(find_rule, "*") == 0)//ÊÇ·ñ²éÕÒËùÓĞ
-				{
-					if (1)//¿ÉÒÔÅĞ¶ÏÎÄ¼şºó×º
-					{
-						url_info info;
-						strncpy(info.filepath, Path, strlen(config.savePath) + 24);//ÎÄ¼ş´æ´¢Â·¾¶
-						strcpy(info.filename, findFile.name);
-						info.filesize = findFile.size;//ÎÄ¼şµÄ´óĞ¡
-						tm * t = localtime(&findFile.time_write);//»ñÈ¡ÎÄ¼ş×îºóĞŞ¸ÄÊ±¼ä
-						strftime(info.end_time, 64, "%Y-%m-%d %H:%M:%S", t);
-						info.state = DL_SUCCESS;//¸üĞÂ×´Ì¬
-						strcpy(info.remark, "OK!");
-						updata_success(info);
-					}
-				}
-			}
-		} while (_findnext(hFile, &findFile) == 0);
-		if (0 == rt)
-		{
-			if (strcmp(findFile.name, ".") == 0 || strcmp(findFile.name, "..") == 0)
-			{
-				if (strcmp(Path, config.savePath) != 0)
-				{
-					char dir[255];
-					time_t dir_time;
-					time_t now_time;
-					now_time = time(NULL);//»ñµÃÏÖÔÚµÄÊ±¼ä
-					strcpy(dir, (strrchr(Path, '/') + 1));
-					getDirTime(dir, dir_time);//»ñµÃ´´½¨ÏÂÔØµÄÊ±¼ä
-					double a = difftime(now_time, dir_time);
-					if (a > 240)//ÎÄ¼şÏÂÔØ³¬¹ı24Ğ¡Ê±£¨86400£©£¬ÅĞ¶ÏÎªÏÂÔØÊ§°Ü
-					{
-						url_info info;
-						strcpy(info.filepath, Path);
-						info.state = DL_FAIL;
-						strcpy(info.remark, "Link timeout !");
-						updata_FAIL(info);
-						cout << "Á´½Ó³¬Ê±³¬Ê±£¡£¡" << endl;
-					}
-					cout << dir << "--->ÎÄ¼ş¼ĞÖĞÃ»ÓĞÎÄ¼ş" << endl;
-				}
-				cout << "find file***********Ã»ÓĞÏÂÔØÎÄ¼ş********" << endl;
-			}
-		}
-		_findclose(hFile);
-	}
-	return rt;
-}
-//»ñµÃÎÄ¼ş´´½¨Ê±¼ä
+//è·å¾—æ–‡ä»¶åˆ›å»ºæ—¶é—´
 void getDirTime(char* dir, time_t& dir_time)
 {
 	tm tm_;
@@ -263,13 +46,13 @@ void getDirTime(char* dir, time_t& dir_time)
 	char tmp[256];
 	strcpy(tmpDir, dir);
 	strtok(tmpDir, "_");
-	strcpy(tmp, tmpDir);//ÄêÔÂÈÕ
+	strcpy(tmp, tmpDir);//å¹´æœˆæ—¥
 	strcat(tmp, "-");
-	strcat(tmp, strtok(NULL, "_"));//Ê±
+	strcat(tmp, strtok(NULL, "_"));//æ—¶
 	strcat(tmp, "-");
-	strcat(tmp, strtok(NULL, "_"));//·Ö
+	strcat(tmp, strtok(NULL, "_"));//åˆ†
 	strcat(tmp, "-");
-	strcat(tmp, strtok(NULL, "_"));//Ãë
+	strcat(tmp, strtok(NULL, "_"));//ç§’
 	int year, month, day, hour, minute, second;
 	sscanf(tmp, "%d-%d-%d-%d-%d-%d", &year, &month, &day, &hour, &minute, &second);
 
@@ -282,8 +65,7 @@ void getDirTime(char* dir, time_t& dir_time)
 	tm_.tm_isdst = 0;
 	dir_time = mktime(&tm_);
 }
-
-//½«×´Ì¬×ª»¯Îª×Ö·û´®
+//å°†çŠ¶æ€è½¬åŒ–ä¸ºå­—ç¬¦ä¸²
 char * getState(DL_state & dl_state)
 {
 	switch (dl_state)
@@ -298,18 +80,520 @@ char * getState(DL_state & dl_state)
 		return "DL_SUCCESS";
 	}
 }
-//»ñµÃÏÂÔØĞ­Òé
+//è·å¾—ä¸‹è½½åè®®
 char * getProtocol(DL_protocol & dl_protocol)
 {
 	switch (dl_protocol)
 	{
-	case http_https:
-		return "http_https";
+	case http:
+		return "http";
+	case https:
+		return "https";
 	case magnet:
 		return "magnet";
 	case ED2K:
 		return "ED2K";
 	case ftp:
 		return "ftp";
+	case Err:
+		return "Error";
+	}
+}
+//è®¾ç½®ä¸‹è½½åè®®
+DL_protocol setProtocol(char * Protocol)
+{
+	if (strcmp(Protocol, "http") == 0)
+		return http;
+	if (strcmp(Protocol, "https") == 0)
+		return https;
+	if (strcmp(Protocol, "magnet") == 0)
+		return magnet;
+	if (strcmp(Protocol, "ED2K") == 0)
+		return ED2K;
+	if (strcmp(Protocol, "ftp") == 0)
+		return ftp;
+	if (strcmp(Protocol, "Error") == 0)
+		return Err;
+}
+//è·å¾—remark
+char * getRemark(DL_remark & dl_remark)
+{
+	switch (dl_remark)
+	{
+	case RE_Run://ä¸‹è½½åˆ›å»º
+		return "Run";
+	case RE_OK://ä¸‹è½½æˆåŠŸ
+		return "OK";
+	case RE_xunlei_error://è¿…é›·é”™è¯¯
+		return "xunlei_error";
+	case RE_Parse_error://è§£æé”™è¯¯
+		return "Parse_error";
+	case RE_Link_timeout://é“¾æ¥è¶…æ—¶
+		return "Link_timeout";
+	case RE_Download_timeout://ä¸‹è½½è¶…æ—¶
+		return "Download_timeout";
+	case RE_Link_error://é“¾æ¥ä¸èƒ½ä¸‹è½½
+		return "Link_error";
+	case RE_URL_error://é“¾æ¥ä¸ç¬¦åˆè¦æ±‚
+		return "URL_error";
+	case RE_Download_repeat://é‡å¤ä¸‹è½½
+		return "Download_repeat";
+	case RE_xunlei_save_error:
+		return "xunlei_save_error";
+	}
+}
+//æ›´æ–°åˆ›å»ºæˆåŠŸä»»åŠ¡çš„URL
+void update_Success_url(url_info & info)
+{
+	//info.filepath;//æ–‡ä»¶ä¿å­˜è·¯å¾„
+	//info.protocol;//ä¸‹è½½åè®®
+	//info.remark;//é”™è¯¯å†…å®¹
+	//info.start_time;//å¼€å§‹æ—¶é—´
+	//info.state;//ä¸‹è½½çŠ¶æ€
+	//info.tool;//ä¸‹è½½å·¥å…·
+	//info.url;//ä¸‹è½½URL
+	char sql[1024] = "set names \'GBK\'";
+	int rt;
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+	sprintf(sql, "insert into %s (JID,URL,FILEPATH,PROTOCOL,STATE,REMARK,START_TIME,TOOL) values(%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")", config.tableName, info.JID, info.url, info.filepath,
+		getProtocol(info.protocol), getState(info.state), getRemark(info.remark), info.start_time, info.tool);
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+}
+//æ›´æ–°é”™è¯¯çš„URL
+void update_Error_url(url_info & info)
+{
+	//info.protocol;//ä¸‹è½½åè®®
+	//info.remark;//é”™è¯¯å†…å®¹
+	//info.state;//ä¸‹è½½çŠ¶æ€
+	//info.tool;//ä¸‹è½½å·¥å…·
+	//info.url;//ä¸‹è½½URL
+	//è®¾ç½®ä¸­æ–‡å­—ç¬¦çš„æ”¯æŒ
+	char sql[1024] = "set names \'GBK\'";
+	int rt;
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+	sprintf(sql, "insert into %s (JID,URL,PROTOCOL,STATE,REMARK,TOOL) values(%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\")", config.tableName, info.JID, info.url,
+		getProtocol(info.protocol), getState(info.state), getRemark(info.remark), info.tool);
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+}
+//æ›´æ–°å†æ¬¡å°è¯•å»ºç«‹æˆåŠŸä»»åŠ¡çš„URL
+void update_AgainSuccess_url(url_info & info)
+{
+	char sql[1024] = "set names \'GBK\'";
+	int rt;
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+	//æ›´æ–°çŠ¶æ€ï¼ŒåŒæ—¶å¢åŠ é‡æ–°å°è¯•çš„æ¬¡æ•°
+	sprintf(sql, "update %s set FILEPATH = '%s',STATE = '%s',REMARK = '%s',START_TIME = '%s',RETRY_COUNT = RETRY_COUNT+1 where DJID = %d", config.tableName, info.filepath,
+		getState(info.state), getRemark(info.remark), info.start_time,info.DJID);
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+}
+//æ›´æ–°é”™è¯¯çš„URL
+void update_AgainError_url(url_info & info)
+{
+	char sql[1024] = "set names \'GBK\'";
+	int rt;
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+	//æ›´æ–°å°è¯•æ¬¡æ•°
+	sprintf(sql, "update %s set STATE = '%s',REMARK = '%s',RETRY_COUNT = RETRY_COUNT+1 where DJID = %d", config.tableName,
+		getState(info.state), getRemark(info.remark), info.DJID);
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+}
+//æ›´æ–°ä¸‹è½½çŠ¶æ€
+void updata_FAIL_xunlei_err(url_info& info)
+{
+	//è®¾ç½®ä¸­æ–‡å­—ç¬¦çš„æ”¯æŒ
+	char sql[1024] = "set names \'GBK\'";
+	int rt;
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+	sprintf(sql, "update %s set FILEPATH = \"%s\",STATE = \"%s\",REMARK = \"%s\",END_TIME = \"%s\"where DJID =%d", config.tableName, info.filepath, getState(info.state), getRemark(info.remark), info.end_time, info.DJID);
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+}
+//æ›´æ–°ä¸‹è½½çŠ¶æ€
+void updata_FAIL_err(url_info& info)
+{
+	//è®¾ç½®ä¸­æ–‡å­—ç¬¦çš„æ”¯æŒ
+	char sql[1024] = "set names \'GBK\'";
+	int rt;
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+	sprintf(sql, "update %s set FILEPATH = \"%s\",STATE = \"%s\",REMARK = \"%s\",END_TIME = \"%s\"where DJID =%d", config.tableName,info.filepath, getState(info.state), getRemark(info.remark), info.end_time, info.DJID);
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+}
+//æ›´æ–°å®ŒæˆçŠ¶æ€
+void updata_success_file(url_info & info)
+{
+	//è®¾ç½®ä¸­æ–‡å­—ç¬¦çš„æ”¯æŒ
+	char sql[1024] = "set names \'GBK\'";
+	int rt;
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+	sprintf(sql, "update %s set FILENAME = \"%s\",FILESIZE = %d,STATE = \"%s\",REMARK = \"%s\",END_TIME = \"%s\"where DJID =%d", config.tableName,info.filename, info.filesize, getState(info.state),getRemark(info.remark), info.end_time, info.DJID);
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+}
+//å¾—åˆ°çŠ¶æ€ä¸ºDL_RUNçš„è¡Œ
+int get_stateDL_RUN()
+{
+	char sql[1024] = "set names \'GBK\'";
+	int rt;
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+	//char sql[1024] = "";//å¾—åˆ°çŠ¶æ€ä¸ºä¸‹è½½çš„æ–‡ä»¶è·¯å¾„
+	sprintf(sql, "select DJID,FILEPATH from %s where STATE = \"DL_RUN\"", config.tableName);
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+		return 0;
+	}
+	else
+	{
+		cout << "ä¸‹è½½çŠ¶æ€é›†åˆè·å–æˆåŠŸ" << endl;
+		res = mysql_store_result(&con);//å–å¾—æŸ¥è¯¢ç»“æœ
+	}
+}
+//å¾—åˆ°æŸ¥è¯¢çš„è¡Œ
+int get_RUN_row(url_info & info)
+{
+	MYSQL_ROW row;//è¡Œ
+	if (row = mysql_fetch_row(res))
+	{
+		char tmp[256];
+		strcpy(tmp, row[0]);
+		sscanf(row[0], "%d", &(info.DJID));
+		sscanf(row[1], "%s", info.filepath);
+		//strcpy(info.filepath, row[1]);
+		cout << row[0]<<"****æŸ¥è¯¢==============>" << row[1] << endl;
+		return 1;
+	}
+	else
+	{
+		mysql_free_result(res);
+		return 0;
+	}
+}
+//å¾—åˆ°ç°åœ¨æ€»çš„ä»»åŠ¡æ•°é‡
+int getSumTask()
+{
+	char sql[1024] = "";
+	int rt;
+	sprintf(sql, "select count(DJID) from %s where REMARK in ('Run','Link_timeout','Download_timeout','xunlei_save_error')", config.tableName);
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+		return -1;
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+		MYSQL_RES * TempRes;
+		MYSQL_ROW TempRow;
+		int rt;
+		TempRes = mysql_store_result(&con);
+		TempRow = mysql_fetch_row(TempRes);
+		sscanf(TempRow[0], "%d", &rt);
+		mysql_free_result(TempRes);
+		return rt;
+	}
+}
+
+//è·å¾—å¯ä»¥å†æ¬¡ä¸‹è½½URLçš„æ•°æ®åº“è¿æ¥
+int get_againURL()
+{
+	char sql[1024] = "set names \'GBK\'";
+	int rt;
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+	}
+	else
+	{
+		printf("%s executed!!!\n", sql);
+	}
+	int sumtask = getSumTask();
+	sprintf(sql, "select DJID,URL,PROTOCOL from %s where REMARK in( 'xunlei_error','Parse_error','Link_error') and RETRY_COUNT <= %d limit %d", config.tableName,config.MaxPetryCount,(config.MaxTask - sumtask-1));
+	rt = mysql_real_query(&con, sql, strlen(sql));
+	if (rt)
+	{
+		printf("Error making query: %s !!!\n", mysql_error(&con));
+		return 0;
+	}
+	else
+	{
+		cout << "ä¸‹è½½çŠ¶æ€é›†åˆè·å–æˆåŠŸ" << endl;
+		res = mysql_store_result(&con);//å–å¾—æŸ¥è¯¢ç»“æœ
+	}
+}
+//è·å¾—å†æ¬¡ä¸‹è½½çš„urlè¡Œ
+int get_again_URL(url_info & info)
+{
+	MYSQL_ROW row;//è¡Œ
+	if (row = mysql_fetch_row(res))
+	{
+		char tmp[256];
+		strcpy(tmp, row[0]);
+		sscanf(row[0], "%d", &(info.DJID));//å¾—åˆ°urlçš„ä¸»é”®
+		sscanf(row[1], "%s", info.url);//å¾—åˆ°urlåœ°å€
+		sscanf(row[2], "%s", tmp);//è½¬æ¢ä¸‹è½½åè®®
+		info.protocol = setProtocol(tmp);
+		return 1;
+	}
+	else
+	{
+		mysql_free_result(res);
+		return 0;
+	}
+}
+
+int find_file(url_info & info, char * find_rule = "*")
+{
+	_finddata_t findFile;//è·å–å¾—åˆ°çš„æ–‡ä»¶ä¿¡æ¯
+	intptr_t hFile;//æŸ¥æ‰¾åˆ°çš„æ–‡ä»¶å¥æŸ„
+	char findPath[1024];
+	int rt = 0;
+
+	//åˆ¤æ–­è·¯å¾„ä¸‹é¢æ˜¯å¦æœ‰.xltdæ–‡ä»¶
+	strcpy(findPath, info.filepath);
+	strcat(findPath, "/*.xltd");
+	if (-1L == (hFile = _findfirst(findPath, &findFile)))
+	{
+		//æ–‡ä»¶ä¸­ä¸å­˜åœ¨.xltdæ–‡ä»¶
+		//åˆ¤æ–­æ–‡ä»¶ä¸­æ‰€æœ‰æ–‡ä»¶
+		strcpy(findPath, info.filepath);
+		strcat(findPath, "/");
+		strcat(findPath, find_rule);//è®¾ç½®æŸ¥æ‰¾å…¨éƒ¨æ–‡ä»¶
+
+		if ((hFile = _findfirst(findPath, &findFile)) == -1L)
+		{
+			//æ²¡æœ‰*.xltdæ–‡ä»¶
+			cout << findPath << "--->æ–‡ä»¶ä¸å­˜åœ¨" << "****è¿…é›·å­˜å‚¨å‡ºé—®é¢˜" << endl;
+			time_t now_time;
+			now_time = time(NULL);//è·å¾—ç°åœ¨çš„æ—¶é—´
+			tm * t = localtime(&findFile.time_write);//è·å–æ–‡ä»¶æœ€åä¿®æ”¹æ—¶é—´
+			strftime(info.end_time, 64, "%Y-%m-%d %H:%M:%S", t);
+			info.state = DL_FAIL;
+			info.remark = RE_xunlei_save_error;
+			strcpy(info.filepath , "");
+			updata_FAIL_xunlei_err(info);
+			return 0;
+		}
+		else {
+			do {
+				if (findFile.attrib & _A_SUBDIR) //æŸ¥è¯¢åˆ°çš„ä¸ºæ–‡ä»¶å¤¹
+				{
+					if (strcmp(findFile.name, ".") != 0 && strcmp(findFile.name, "..") != 0)
+					{
+						//æŸ¥è¯¢å­ç›®å½•
+						strcpy(findPath, info.filepath);
+						strcat(findPath, "/");
+						strcat(findPath, findFile.name);
+						strcpy(info.filepath, findPath);
+						find_file(info);//æŸ¥æ‰¾å­æ–‡ä»¶å¤¹
+						rt = -1;//åé¢åˆ¤æ–­ç©º
+					}
+					else
+					{
+						continue;
+					}
+				}
+				else
+				{
+					rt++;//æ–‡ä»¶å¤¹ä¸­æœ‰æ–‡ä»¶
+					//æŸ¥è¯¢åˆ°æ–‡ä»¶
+					if (1)//å¯ä»¥åˆ¤æ–­æ–‡ä»¶åç¼€.torrent
+					{
+						strcpy(info.filename, findFile.name);//ä¸‹è½½å®Œæˆæ–‡ä»¶çš„åç§°
+						info.filesize = findFile.size;//æ–‡ä»¶çš„å¤§å°
+						tm * t = localtime(&findFile.time_write);//è·å–æ–‡ä»¶æœ€åä¿®æ”¹æ—¶é—´
+						strftime(info.end_time, 64, "%Y-%m-%d %H:%M:%S", t);
+						info.state = DL_SUCCESS;//æ›´æ–°çŠ¶æ€
+						info.remark = RE_OK;
+						updata_success_file(info);
+						//updata_success(info);
+					}
+				}
+			} while (_findnext(hFile, &findFile) == 0);
+			//æ²¡æœ‰æ–‡ä»¶
+			if (0 == rt)//æ–‡ä»¶å¤¹ä¸­æ²¡æœ‰æ–‡ä»¶
+			{
+				if (strcmp(findFile.name, ".") == 0 || strcmp(findFile.name, "..") == 0)
+				{
+					char dir[255];
+					time_t dir_time;
+					time_t now_time;
+					now_time = time(NULL);//è·å¾—ç°åœ¨çš„æ—¶é—´
+					strncpy(dir, findPath + (strlen(config.savePath) + 1), 23);//å–å¾—æ–‡ä»¶å¤¹æ—¶é—´
+
+					tm * t = localtime(&now_time);//ä¿®æ”¹çš„æ—¶é—´
+					strftime(info.end_time, 64, "%Y-%m-%d %H:%M:%S", t);
+
+					getDirTime(dir, dir_time);//è·å¾—åˆ›å»ºä¸‹è½½çš„æ—¶é—´
+					double a = difftime(now_time, dir_time);
+					if (a > config.timeout_time)//æ–‡ä»¶ä¸‹è½½è¶…è¿‡24å°æ—¶ï¼ˆ86400ï¼‰ï¼Œåˆ¤æ–­ä¸ºä¸‹è½½å¤±è´¥
+					{
+						info.state = DL_FAIL;
+						info.remark = RE_Link_timeout;
+						updata_FAIL_err(info);
+						cout << "é“¾æ¥è¶…æ—¶è¶…æ—¶ï¼ï¼" << endl;
+					}
+				}
+			}
+		}
+		_findclose(hFile);
+	}
+	else
+	{
+		//å­˜åœ¨.xltdæ–‡ä»¶
+		//æ­£åœ¨ä¸‹è½½æ–‡ä»¶å¤„ç†
+		//åˆ¤æ–­æ˜¯å¦ä¸‹è½½è¶…æ—¶
+		time_t dir_time;
+		time_t	now_time;
+		now_time = time(NULL);//è·å¾—ç°åœ¨çš„æ—¶é—´
+		char tmp[24];
+		strncpy(tmp, findPath + (strlen(config.savePath) + 1), 23);//å–å¾—æ–‡ä»¶å¤¹ä¸­çš„æ—¶é—´
+
+		tm * t = localtime(&now_time);//ä¿®æ”¹çš„æ—¶é—´
+		strftime(info.end_time, 64, "%Y-%m-%d %H:%M:%S", t);
+
+		getDirTime(tmp, dir_time);//è·å¾—åˆ›å»ºä¸‹è½½çš„æ—¶é—´
+		double a = difftime(now_time, dir_time);
+		if (a > config.timeout_time)//æ–‡ä»¶ä¸‹è½½è¶…è¿‡24å°æ—¶ï¼ˆ86400ï¼‰ï¼Œåˆ¤æ–­ä¸ºä¸‹è½½å¤±è´¥
+		{
+			info.state = DL_FAIL;
+			info.remark = RE_Download_timeout;
+			updata_FAIL_err(info);
+			cout << "ä¸‹è½½è¶…æ—¶ï¼ï¼" << endl;
+		}
+		_findclose(hFile);
+	}
+	return rt;
+}
+
+void update_state() 
+{
+	if (get_stateDL_RUN()) 
+	{
+		url_info info;
+		while (get_RUN_row(info)) 
+		{
+			find_file(info);
+		}
 	}
 }

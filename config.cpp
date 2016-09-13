@@ -1,4 +1,4 @@
-//------------------- include ------------
+ï»¿//------------------- include ------------
 #include "config.h"
 #include <string.h>
 #include <stdlib.h>
@@ -7,14 +7,13 @@
 #include <iostream>
 
 using namespace std;
-
-Config config;
+//------------------ global ---------------
+Config config;//å…¨å±€é…ç½®ä¿¡æ¯
 
 //----------------- function -------------
 /*
-¼ÓÔØÅäÖÃÎÄ¼ş
-name ĞèÒª¼ÓÔØµÄÃû³Æ
-
+åŠ è½½é…ç½®æ–‡ä»¶
+name éœ€è¦åŠ è½½çš„åç§°
 */
 void  init(char* name, char* path)
 {
@@ -24,7 +23,7 @@ void  init(char* name, char* path)
 	fp = fopen("config.txt", "r");
 	if (fp == NULL)
 	{
-		cout << "***************" << "¼ÓÔØconfig.txtÎÄ¼ş´íÎó" << "**************" << endl;
+		cout << "***************" << "åŠ è½½config.txtæ–‡ä»¶é”™è¯¯" << "**************" << endl;
 		system("pause");
 		exit(0);
 	}
@@ -34,8 +33,6 @@ void  init(char* name, char* path)
 	{
 		if (strstr(temp, name))
 		{
-			/*strtok(temp, "=");
-			strcpy(temp2, strtok(NULL, "="));*/
 			strcpy(temp2, (strchr(temp,'=') + 1));
 			int i;
 			for (i = 0; i < 126; i++) {
@@ -53,6 +50,7 @@ void  init(char* name, char* path)
 	fclose(fp);
 }
 
+//åˆå§‹åŒ–å˜é‡
 void init_config()
 {
 	init("xunlei", config.xunlei);
@@ -63,8 +61,16 @@ void init_config()
 	init("host", config.host);
 	init("dbName", config.dbName);
 	init("tableName", config.tableName);
-	init("url_mold_1", config.url_mold_1);
-	init("url_mold_2", config.url_mold_2);
-	init("url_mold_3", config.url_mold_3);
-	init("url_mold_4", config.url_mold_4);
+	char temp[255];
+	init("timeout_time", temp); 
+	sscanf(temp, "%d",&(config.timeout_time));
+	init("MaxPetryCount", temp);
+	sscanf(temp, "%d", &(config.MaxPetryCount));
+	init("MaxTask", temp);
+	sscanf(temp, "%d", &(config.MaxTask));
+	init("http_mold", config.http_mold);
+	init("https_mold", config.https_mold);
+	init("magnet_mold", config.magnet_mold);
+	init("ED2K_mold", config.ED2K_mold);
+	init("ftp_mold", config.ftp_mold);
 }

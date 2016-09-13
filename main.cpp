@@ -1,44 +1,84 @@
-//---------------- include ---------------
+﻿//---------------- include ---------------
 #include <string.h>
 #include <stdlib.h>
 #include <fstream>
 #include <iostream>
 #include <windows.h>
 #include <winuser.h>
-#include "urlStart.h"
 #include "config.h"
 #include "urlMysql.h"
-#include "urlFile.h"
-#include "urlSource.h"
+#include "xunlei.h"
+#include "urlOper.h"
 using namespace std;
 
 //------------------- function -------------
 int main()
 {
-	init_config();//��ʼ�����ò���
-	open_xunlei();//����Ѹ��
-	cout << "Ѹ�������ɹ�:" << endl;
+	init_config();//初始化配置参数
+	open_xunlei(config.xunlei);
+	cout << "迅雷启动成功" << endl;
 	initMysql();
-	find_new_file(config.urlPath);
 
 	int i = 0;
-	while (1) //����ļ��Ƿ��������
+	while (1) //检测文件是否下载完成
 	{
-		char url[1024];
 		url_info info;
-		if (read_url(info))
+		int sumTask = getSumTask();//获得已经建立多少任务
+		if ((-1 != sumTask) && (sumTask < config.MaxTask))
 		{
-			i++;
-			cout << info.url << endl;
-			urlStart(i, info);
-			info.DJID = i;
-			info.JID = i;
-			add_DL(info);
+			if (read_url(info))
+			{
+				if (is_url_valid(info))//判断url是否有效
+				{
+					cout << info.url << endl;
+					if (xunlei_add_url(info))
+					{
+						//成功建立下载
+						//filepath;protocol;remark;start_time;state;tool;url;
+						update_Success_url(info);
+					}
+					else
+					{
+						//建立连接错误
+						//protocol;remark;state;tool;url;
+						update_Error_url(info);
+					}
+				}
+				//URL是不符合要求的
+				else
+				{
+					info.state = DL_FAIL;
+					info.remark = RE_URL_error;
+					update_Error_url(info);
+				}
+			}
+			else
+			{
+				//读取数据库中可以再次尝试的连接
+				if (get_againURL())
+				{
+					//得到一条url
+					while (get_again_URL(info))
+					{
+						if (xunlei_add_url(info))
+						{
+							//成功建立下载
+							//filepath;protocol;remark;start_time;state;tool;url;
+							update_AgainSuccess_url(info);
+						}
+						else
+						{
+							//建立连接错误
+							//protocol;remark;state;tool;url;
+							update_AgainError_url(info);
+						}
+					}
+				}
+			}
 		}
-		fileState(config.savePath);
+		update_state();
 		Sleep(2000);
 	}
-	system("pause");
 	return 0;
 }
 

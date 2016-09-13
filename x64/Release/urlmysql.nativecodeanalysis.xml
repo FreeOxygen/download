@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DEFECTS>
+  <DEFECT>
+    <SFA>
+      <FILEPATH>e:\c++\download\download\</FILEPATH>
+      <FILENAME>urlmysql.cpp</FILENAME>
+      <LINE>37</LINE>
+      <COLUMN>9</COLUMN>
+    </SFA>
+    <DEFECTCODE>6031</DEFECTCODE>
+    <DESCRIPTION>返回值被忽略: “getchar”。</DESCRIPTION>
+    <FUNCTION>initMysql</FUNCTION>
+    <DECORATED>?initMysql@@YAXXZ</DECORATED>
+    <FUNCLINE>22</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT>
+  <DEFECT>
+    <SFA>
+      <FILEPATH>e:\c++\download\download\</FILEPATH>
+      <FILENAME>urlmysql.cpp</FILENAME>
+      <LINE>49</LINE>
+      <COLUMN>7</COLUMN>
+    </SFA>
+    <DEFECTCODE>6031</DEFECTCODE>
+    <DESCRIPTION>返回值被忽略: “strtok”。</DESCRIPTION>
+    <FUNCTION>getDirTime</FUNCTION>
+    <DECORATED>?getDirTime@@YAXPEADAEA_J@Z</DECORATED>
+    <FUNCLINE>43</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT>
+  <DEFECT>
+    <SFA>
+      <FILEPATH>e:\c++\download\download\</FILEPATH>
+      <FILENAME>urlmysql.cpp</FILENAME>
+      <LINE>58</LINE>
+      <COLUMN>7</COLUMN>
+    </SFA>
+    <DEFECTCODE>6031</DEFECTCODE>
+    <DESCRIPTION>返回值被忽略: “sscanf”。</DESCRIPTION>
+    <FUNCTION>getDirTime</FUNCTION>
+    <DECORATED>?getDirTime@@YAXPEADAEA_J@Z</DECORATED>
+    <FUNCLINE>43</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT>
+  <DEFECT>
+    <SFA>
+      <FILEPATH>e:\c++\download\download\</FILEPATH>
+      <FILENAME>urlmysql.cpp</FILENAME>
+      <LINE>262</LINE>
+      <COLUMN>8</COLUMN>
+    </SFA>
+    <DEFECTCODE>6031</DEFECTCODE>
+    <DESCRIPTION>返回值被忽略: “sscanf”。</DESCRIPTION>
+    <FUNCTION>get_RUN_row</FUNCTION>
+    <DECORATED>?get_RUN_row@@YAHAEAUurl_info@@@Z</DECORATED>
+    <FUNCLINE>255</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT>
+</DEFECTS>

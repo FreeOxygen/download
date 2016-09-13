@@ -1,50 +1,17 @@
-#ifndef _URLMYSQL_H_INCLUDED_
+ï»¿#ifndef _URLMYSQL_H_INCLUDED_
 #define _URLMYSQL_H_INCLUDED_
 #include <string.h>
-////---------------- struct ----------------------
+#include "stdafx.h"
 
-struct files
-{
-	char dir[256] = { "null" };
-	char file_name[1024] = { "null" };
-	char file_time[256] = { "null" };
-	char file_hash[1024] = { "null" };
-	char file_state[2] = "";
-};
-
-enum DL_state { DL_WAIT, DL_RUN, DL_FAIL, DL_SUCCESS };//ÏÂÔØµÄ×´Ì¬
-enum DL_protocol { http_https, magnet, ED2K, ftp };//ÏÂÔØĞ­Òé
-
-struct url_info
-{
-	int DJID ;//ÏÂÔØID
-	int JID ;//ÏÂÔØÁ´½ÓID
-	char url[1024];//url
-	int RETRY_COUNT;//ÏÂÔØ´ÎÊı
-	char filename[1024];//ÏÂÔØÍê³ÉÎÄ¼şµÄÃû³Æ
-	int filesize;//ÏÂÔØÍê³ÉÎÄ¼ş´óĞ¡
-	char filepath[1024];//ÏÂÔØ´æ·ÅµÄÂ·¾¶
-	int progress;//ÏÂÔØ½ø¶È
-	DL_protocol protocol ;//ÏÂÔØÊ¹ÓÃµÄĞ­Òé
-	DL_state state ;//ÏÂÔØ×´Ì¬
-	char remark[256] = "";//ÏÂÔØÊ§°ÜËµÃ÷
-	char start_time[64] = "";//ÏÂÔØ¿ªÊ¼Ê±¼ä
-	char end_time[64] = "";//ÏÂÔØÍê³ÉÊ±¼ä
-	char update_time[64] = "";//¸üĞÂÊ±¼ä
-	char tool[256] = { "thunder" };//Ê¹ÓÃµÄÏÂÔØ¹¤¾ß
-};
-////---------- functions ------------------------
-
-void initMysql();//³õÊ¼»¯MysqlÁ¬½Ó
-int fileState(const char * Paht, char* find_rule = "*");//±éÀúÎÄ¼ş¼Ğ
-void insert_file(files& file);
-//int findFileForSql(char* dir, files & file);
-void getDirTime(char* dir, time_t& dir_time);
-
-void add_DL(url_info & info);
-char * getState(DL_state & dl_state);
-char * getProtocol(DL_protocol & dl_protocol);
-void updata_success(url_info & info);
-void updata_FAIL(url_info& info);
+//---------- functions ------------------------
+void update_Success_url(url_info & info);//æ›´æ–°å»ºç«‹æˆåŠŸçš„ä»»åŠ¡ä¿¡æ¯
+void update_Error_url(url_info & info);//æ›´æ–°å»ºç«‹é”™è¯¯çš„ä»»åŠ¡ä¿¡æ¯
+void update_AgainSuccess_url(url_info & info);//æ›´æ–°å†æ¬¡å°è¯•å»ºç«‹æˆåŠŸä»»åŠ¡çš„URL
+void update_AgainError_url(url_info & info);//æ›´æ–°å†æ¬¡å°è¯•å»ºç«‹é”™è¯¯ä»»åŠ¡çš„URL
+void initMysql();//åˆå§‹åŒ–Mysqlè¿æ¥
+void update_state();//æ›´æ–°çŠ¶æ€
+int getSumTask();//è·å¾—å·²ç»å»ºç«‹ä»»åŠ¡çš„æ€»æ•°
+int get_againURL();//å»ºç«‹è·å¾—å¯ä»¥ä»æ–°ä¸‹è½½çš„urlçš„è¿æ¥
+int get_again_URL(url_info & info);//å¾—åˆ°ä¸€æ¡ä¸‹è½½çš„url
 
 #endif

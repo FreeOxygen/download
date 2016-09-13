@@ -1,14 +1,11 @@
-#ifndef _CONFIG_H_INCLUDED_
+﻿#ifndef _CONFIG_H_INCLUDED_
 #define _CONFIG_H_INCLUDED_
 
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
 using  namespace std;
-void init(char* name,char * path);
-
-void init_config();
-
+//---------- struct ----------
 struct Config
 {
 	char xunlei[256];
@@ -19,11 +16,19 @@ struct Config
 	char host[256];
 	char dbName[256];
 	char tableName[256];
-	char url_mold_1[256];
-	char url_mold_2[256];
-	char url_mold_3[256];
-	char url_mold_4[256];
+	int timeout_time;//判断下载文件超时时间，单位秒
+	char http_mold[256];
+	char https_mold[256];
+	char magnet_mold[256];
+	char ED2K_mold[256];
+	char ftp_mold[256];
+	int MaxTask;//最大的任务量
+	int MaxPetryCount;
 };
+//---------- global ---------
 extern Config config;
+
+//---------- function ---------
+void init_config();
 
 #endif
