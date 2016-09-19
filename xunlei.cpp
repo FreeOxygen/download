@@ -9,10 +9,14 @@
 #include "xunlei.h"
 using namespace std;
 
+// constant definition
+const int MAX_WAIT_ROUND = 3;
+
 //-------------- gloable variable -------
-HWND hwnd;//打开迅雷的窗口句柄
+HWND g_hwnd;//打开迅雷的窗口句柄
 
-
+int write_Clip(char * buf);
+int waitForInput(HWND hwnd);
 //-------------- functions --------------
 struct ProcessWindow
 {
@@ -52,29 +56,50 @@ int open_xunlei(char * xunleiPath)
 	si.wShowWindow = SW_SHOW;
 	// 进程信息   
 	PROCESS_INFORMATION pi;
-
-	// 创建进程   
-	// 第二个参数是要启动的应用程序路径名，比如：C:\Test.exe
-	if (CreateProcess(xunleiPath, NULL, NULL, NULL, false, 0, NULL, NULL, &si, &pi))
+	int find_ROUND = MAX_WAIT_ROUND;
+	do
 	{
-		ProcessWindow procwin;
-		procwin.dwProcessId = pi.dwProcessId;
-		procwin.hwndWindow = NULL;
-		// 等待新进程初始化完毕   
-		Sleep(5000);
-		// 查找主窗口   
-		EnumWindows(EnumWindowCallBack, (LPARAM)&procwin);
-		hwnd = procwin.hwndWindow;
-		//SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);//让窗口置于顶层
-		char buf[200];
-		GetWindowText(hwnd, buf, 200);
-		cout << "open exe:" << buf << endl;
-		return 1;//打开成功
+		g_hwnd = FindWindow("XLUEFrameHostWnd", "迅雷");
+		if (GetParent(g_hwnd) == NULL)
+		{
+			break;
+		}
+		Sleep(1000);
+	} while (find_ROUND--);
+	
+	if (NULL == g_hwnd)
+	{
+		//迅雷没有启动
+		// 创建进程   
+		// 第二个参数是要启动的应用程序路径名，比如：C:\Test.exe
+		if (CreateProcess(xunleiPath, NULL, NULL, NULL, false, 0, NULL, NULL, &si, &pi))
+		{
+			ProcessWindow procwin;
+			procwin.dwProcessId = pi.dwProcessId;
+			procwin.hwndWindow = NULL;
+			// 等待新进程初始化完毕   
+			Sleep(5000);
+			// 查找主窗口   
+			EnumWindows(EnumWindowCallBack, (LPARAM)&procwin);
+			g_hwnd = procwin.hwndWindow;
+			//SetWindowPos(g_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);//让窗口置于顶层
+			char buf[200];
+			GetWindowText(g_hwnd, buf, 200);
+			cout << "open exe:" << buf << endl;
+			return 1;//打开成功
+		}
+		else
+		{
+			cout << GetLastError() << endl;
+			return 0;//迅雷打开错误
+		}
 	}
 	else
 	{
-		cout << GetLastError() << endl;
-		return 0;//迅雷打开错误
+		char buf[255];
+		GetWindowText(g_hwnd, buf, 255);
+		cout << buf << "：打开成功" << endl;
+		return 0;
 	}
 }
 
@@ -489,23 +514,21 @@ return 0添加错误 1 添加成功
 */
 int xunlei_add_url(url_info & info)
 {
-	HWND newHwnd = NULL;
+	HWND newHwnd = NULL;//新建窗口的句柄
+
 	int x, y;
 
-	if (!IsWindowVisible(hwnd)) //判断窗口是否显示
+	if (!IsWindowVisible(g_hwnd)) //判断窗口是否显示
 	{
-		ShowWindow(hwnd, SW_SHOW);//让窗口显示
+		ShowWindow(g_hwnd, SW_SHOW);//让窗口显示
 	}
 
-	char title1[200] = { 0 };
-	getText(hwnd, title1);//获取主窗口标题
-	
 	//磁力链接
 	if (info.protocol == magnet)
 	{
-		SetForegroundWindow(hwnd);
-		PostMessage(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(36, 73));//点击新建按键
-		PostMessage(hwnd, WM_LBUTTONUP, MK_LBUTTON, MAKELPARAM(36, 73));
+		SetForegroundWindow(g_hwnd);
+		PostMessage(g_hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(36, 73));//点击新建按键
+		PostMessage(g_hwnd, WM_LBUTTONUP, MK_LBUTTON, MAKELPARAM(36, 73));
 		int tmp = 0;
 		//创建下载任务错误
 		do
@@ -519,44 +542,25 @@ int xunlei_add_url(url_info & info)
 				cout << "*********新建任务错误**********" << endl;
 				return 0;
 			}
+			Sleep(1000);
 		} while (newHwnd == NULL && !IsWindowVisible(newHwnd));
 
-		char titleTmp[200];
-		GetWindowText(newHwnd, titleTmp, 200);
-		cout << "打开的窗口:" << tmp << endl;
 
-		int cont = 0;
-		//窗口错误
-		while (!IsWindowVisible(newHwnd))
-		{
-			cont++;
-			if (cont > 1000)
-			{
-				info.remark = RE_xunlei_error;//迅雷创建任务错误
-				info.state = DL_FAIL;
-				cout << "*************新建窗口错误***********" << endl;
-				return 0;
-			}
-		}
-
-		Sleep(1000);
 		SetForegroundWindow(newHwnd);
-		keyboardInput(info.url);//输入URL
-		Sleep(1000);
-		getPos(newHwnd, &x, &y);//获得新建文件窗口的坐标
-		SetCursorPos(x + 100, y + 230);//移动鼠标点击下载
-		Sleep(1000);
+		write_Clip(info.url);//将url写入剪贴板
+		//ctrl + V
+		keybd_event(VK_CONTROL, 0, 0, 0);
+		keybd_event('V', 0, 0, 0);
+		keybd_event('V', 0, KEYEVENTF_KEYUP, 0);
+		keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+		Sleep(1000);//等待输入完成
+		PostMessage(newHwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(183, 219));//点击下载按键
+		PostMessage(newHwnd, WM_LBUTTONUP, MK_LBUTTON, MAKELPARAM(183, 219));
 
-		mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);//点击下载
-		Sleep(1000);
-		HWND hwnd_Megnet;
 		HWND hwnd_NewBT = NULL;
-		hwnd_Megnet = FindWindow(NULL, "磁力链解析");//得到磁力链解析的句柄
-		SetForegroundWindow(hwnd_Megnet);
 		int i;
 		for (i = 0; hwnd_NewBT == NULL&&i < 500; i++) {
 			hwnd_NewBT = FindWindow(NULL, "新建BT任务");
-
 			Sleep(1000);
 		}
 
@@ -567,7 +571,6 @@ int xunlei_add_url(url_info & info)
 			cout << "种子下载失败" << endl;
 			return 0;
 		}
-
 		else {
 			SetForegroundWindow(hwnd_NewBT);
 			//获得当前系统的时间，用于命名文件夹
@@ -599,58 +602,52 @@ int xunlei_add_url(url_info & info)
 			strcat(info.start_time, ":");
 			strcat(info.start_time, strtok(NULL, "_"));//秒
 
+			//tab键
+			keybd_event(VK_TAB, 0, 0, 0);
+			keybd_event(VK_TAB, 0, KEYEVENTF_KEYUP, 0);
 
-			getPos(hwnd_NewBT, &x, &y);//获得新建文件窗口的坐标
-			Sleep(500);
-			SetCursorPos(x + 150, y + 500);//移动鼠标点击存储地址
-			mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);//点击存储地址编辑框
-			Sleep(1000);
+			keybd_event(VK_CONTROL, 0, 0, 0);//将默认路径全选
+			keybd_event('A', 0, 0, 0);
 
-			keybd_event(17, 0, 0, 0);//将默认路径全选
-			keybd_event(65, 0, 0, 0);
+			keybd_event('A', 0, KEYEVENTF_KEYUP, 0);
+			keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);//删除默认存储路径
 
-			keybd_event(65, 0, KEYEVENTF_KEYUP, 0);
-			keybd_event(17, 0, KEYEVENTF_KEYUP, 0);//删除默认存储路径
+			write_Clip(path);
+			//ctrl + V
+			keybd_event(VK_CONTROL, 0, 0, 0);
+			keybd_event('V', 0, 0, 0);
+			keybd_event('V', 0, KEYEVENTF_KEYUP, 0);
+			keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
 
-			keybd_event(17, 0, 0, 0);
-			keybd_event(88, 0, 0, 0);
+			Sleep(1000);//等待输入完成
+			PostMessage(hwnd_NewBT, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(155, 531));//点击下载按键
+			PostMessage(hwnd_NewBT, WM_LBUTTONUP, MK_LBUTTON, MAKELPARAM(155, 531));
 
-			keybd_event(88, 0, KEYEVENTF_KEYUP, 0);
-			keybd_event(17, 0, KEYEVENTF_KEYUP, 0);
-			Sleep(1000);
-			SetForegroundWindow(hwnd_NewBT);
-			keyboardInput(path);//输入存储路径
-			Sleep(1000);
-
-
-			SetCursorPos(x + 200, y + 530);
-
-			mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);//点击下载
-			Sleep(1000);
-
-			char title2[200] = { 0 };
-			HWND h = GetForegroundWindow();
-			getText(h, title2);//获取当前窗口的标题
-			cout << title1 << "-----" << title2 << endl;
-			
 			//下载链接错误
-			if (IsWindowVisible(hwnd_NewBT) || IsWindowVisible(FindWindow("XLUEModalHostWnd", "MessageBox")))
+			int wait_cont = MAX_WAIT_ROUND;
+			while (IsWindowVisible(hwnd_NewBT) || IsWindowVisible(FindWindow("XLUEModalHostWnd", "MessageBox")))
 			{
 				//连接地址不正确
-				if (IsWindowVisible(FindWindow("XLUEModalHostWnd", "MessageBox")))
+				if (wait_cont < 0)
 				{
-					info.state = DL_FAIL;//文件下载失败
-					info.remark = RE_Download_repeat;
+					if (IsWindowVisible(FindWindow("XLUEModalHostWnd", "MessageBox")))
+					{
+						info.state = DL_FAIL;//文件下载失败
+						info.remark = RE_Download_repeat;
+					}
+					else
+					{
+						info.state = DL_FAIL;//文件下载失败
+						info.remark = RE_Link_error;
+					}
+					keybd_event(VK_ESCAPE, 0, 0, 0);//按下esc键退出新建下载
+					keybd_event(VK_ESCAPE, 0, KEYEVENTF_KEYUP, 0);
+					Sleep(1000);
+					printf("download failed\n");
+					return 0;
 				}
-				else
-				{
-					info.state = DL_FAIL;//文件下载失败
-					info.remark = RE_Link_error;
-				}
-				keybd_event(27, 0, 0, 0);//按下esc键退出新建下载
-				keybd_event(27, 0, KEYEVENTF_KEYUP, 0);
-				printf("download failed\n");
-				return 0;
+				Sleep(1000);
+				wait_cont--;
 			}
 
 			info.state = DL_RUN;//状态正在下载
@@ -663,9 +660,9 @@ int xunlei_add_url(url_info & info)
 	//普通连接
 	else
 	{
-		SetForegroundWindow(hwnd);
-		PostMessage(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(36, 73));//点击新建按键
-		PostMessage(hwnd, WM_LBUTTONUP, MK_LBUTTON, MAKELPARAM(36, 73));
+		SetForegroundWindow(g_hwnd);
+		PostMessage(g_hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(36, 73));//点击新建按键
+		PostMessage(g_hwnd, WM_LBUTTONUP, MK_LBUTTON, MAKELPARAM(36, 73));
 		int tmp = 0;
 		//得到新建下载的句柄
 
@@ -681,32 +678,21 @@ int xunlei_add_url(url_info & info)
 				cout << "*********新建任务错误**********" << endl;
 				return 0;
 			}
+
+			Sleep(1000);
 		} while (newHwnd == NULL && !IsWindowVisible(newHwnd));
 
 		char titleTmp[200];
 		GetWindowText(newHwnd, titleTmp, 200);
-		cout << "打开的窗口:" << tmp << endl;
+		cout << "打开的窗口:" << titleTmp << endl;
 
-		int cont = 0;
-		//判断新建窗口是否打开
-
-		//新建窗口没有打开
-		while (!IsWindowVisible(newHwnd))
-		{
-			cont++;
-			if (cont > 1000)
-			{
-				info.state = DL_FAIL;
-				info.remark = RE_xunlei_error;
-				cout << "*************新建窗口错误***********" << endl;
-				return 0;
-			}
-		}
-
-
-		Sleep(1000);
 		SetForegroundWindow(newHwnd);
-		keyboardInput(info.url);//输入URL
+		write_Clip(info.url);//将url写入剪贴板
+		//ctrl + V
+		keybd_event(VK_CONTROL, 0, 0, 0);
+		keybd_event('V', 0, 0, 0);
+		keybd_event('V', 0, KEYEVENTF_KEYUP, 0);
+		keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
 		Sleep(1000);
 
 		//获得当前系统的时间，用于命名文件夹
@@ -715,7 +701,6 @@ int xunlei_add_url(url_info & info)
 		int sptk = 0;
 		char savepath[126] = { 0 };
 
-		/*sptk += sprintf(savepath, "%d_", urlNum);*/
 		sptk += sprintf(savepath + sptk, "%4d-", systim.wYear);
 		sptk += sprintf(savepath + sptk, "%02d-", systim.wMonth);
 		sptk += sprintf(savepath + sptk, "%02d_", systim.wDay);
@@ -739,61 +724,113 @@ int xunlei_add_url(url_info & info)
 		strcat(info.start_time, ":");
 		strcat(info.start_time, strtok(NULL, "_"));//秒
 
-		getPos(newHwnd, &x, &y);//获得新建文件窗口的坐标
-		SetCursorPos(x + 200, y + 250);//移动鼠标点击存储地址
-		Sleep(1000);
-		SetForegroundWindow(newHwnd);
-		mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);//点击存储地址编辑框
-		Sleep(1000);
-		//Sleep(500);
-		keybd_event(17, 0, 0, 0);//将默认路径全选
-		keybd_event(65, 0, 0, 0);
-
-		keybd_event(65, 0, KEYEVENTF_KEYUP, 0);
-		keybd_event(17, 0, KEYEVENTF_KEYUP, 0);//删除默认存储路径
-
-		keybd_event(17, 0, 0, 0);
-		keybd_event(88, 0, 0, 0);
-
-		keybd_event(88, 0, KEYEVENTF_KEYUP, 0);
-		keybd_event(17, 0, KEYEVENTF_KEYUP, 0);
-		Sleep(1000);
-		SetForegroundWindow(newHwnd);
-		keyboardInput(path);//输入存储路径
-		Sleep(1000);
-
-		SetCursorPos(x + 200, y + 300);
-		SetForegroundWindow(newHwnd);
-		mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);//点击下载
-		Sleep(1000);
-
-		char title2[200] = { 0 };
-		HWND h = GetForegroundWindow();
-		getText(h, title2);//获取当前窗口的标题
-		cout << title1 << "-----" << title2 << endl;
-
-		if (IsWindowVisible(newHwnd) || IsWindowVisible(FindWindow("XLUEModalHostWnd", "MessageBox")))
+		for (int n = MAX_WAIT_ROUND; n < -1; n--)
 		{
-			//连接地址不正确
-			if (IsWindowVisible(FindWindow("XLUEModalHostWnd", "MessageBox")))
+			if (waitForInput(newHwnd))
 			{
-				info.state = DL_FAIL;//文件下载失败
-				info.remark = RE_Download_repeat;
+				break;
 			}
-			else
+			if (0 == n)
 			{
+				//url 解析失败
 				info.state = DL_FAIL;//文件下载失败
 				info.remark = RE_Link_error;
+				cout << "url 解析失败" << endl;
+				return 0;
 			}
-			keybd_event(27, 0, 0, 0);//按下esc键退出新建下载
-			keybd_event(27, 0, KEYEVENTF_KEYUP, 0);
-			printf("download failed\n");
-			return 0;
+			Sleep(1000);
+		}
+
+		SetForegroundWindow(newHwnd);
+		//tab键
+		keybd_event(VK_TAB, 0, 0, 0);
+		keybd_event(VK_TAB, 0, KEYEVENTF_KEYUP, 0);
+
+		keybd_event(VK_CONTROL, 0, 0, 0);//将默认路径全选
+		keybd_event('A', 0, 0, 0);
+
+		keybd_event('A', 0, KEYEVENTF_KEYUP, 0);
+		keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);//删除默认存储路径
+
+		write_Clip(path);
+		//ctrl + V
+		keybd_event(VK_CONTROL, 0, 0, 0);
+		keybd_event('V', 0, 0, 0);
+		keybd_event('V', 0, KEYEVENTF_KEYUP, 0);
+		keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+
+		//keyboardInput(path);//输入存储路径
+		Sleep(1000);
+		PostMessage(newHwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(203, 296));//点击下载按键
+		PostMessage(newHwnd, WM_LBUTTONUP, MK_LBUTTON, MAKELPARAM(203, 296));
+
+		int wait_cont = MAX_WAIT_ROUND;
+		while (IsWindowVisible(newHwnd) || IsWindowVisible(FindWindow("XLUEModalHostWnd", "MessageBox")))
+		{
+			//连接地址不正确
+			if (wait_cont < 0)
+			{
+				if (IsWindowVisible(FindWindow("XLUEModalHostWnd", "MessageBox")))
+				{
+					info.state = DL_FAIL;//文件下载失败
+					info.remark = RE_Download_repeat;
+				}
+				keybd_event(VK_ESCAPE, 0, 0, 0);//按下esc键退出新建下载
+				keybd_event(VK_ESCAPE, 0, KEYEVENTF_KEYUP, 0);
+				Sleep(1000);
+				printf("download failed\n");
+				return 0;
+			}
+			Sleep(1000);
+			wait_cont--;
 		}
 		info.state = DL_RUN;//状态正在下载
 		strcpy(info.filepath, path);
 		info.remark = RE_Run;
 
 		return 1;
+	}
+}
+
+/*等待窗口准备好输入存储路径
+  即：判断窗口中是否有文件夹开启的button*/
+int waitForInput(HWND hwnd)
+{
+
+	RECT rect;
+	GetWindowRect(hwnd, (LPRECT)&rect);
+	HDC wndDC = GetDC(NULL);
+
+	COLORREF color = GetPixel(wndDC, rect.left + 365, rect.top + 250);
+	ReleaseDC(NULL, wndDC);
+
+	if (0x1b4ff == color)//检测到橘黄色
+	{
+		return 0;
+	}
+	return 1;
+
+}
+//写剪贴板
+int write_Clip(char * buf)
+{
+	if (OpenClipboard(NULL))//打开剪贴板  
+	{
+		HGLOBAL hClip;
+		char * pBuf;
+		EmptyClipboard();//清空剪贴板
+
+		hClip = GlobalAlloc(GPTR, (strlen(buf) + 1));//创建一个win32的内存块
+		pBuf = (char*)GlobalLock(hClip);//锁定内存块
+		strcpy(pBuf, buf);
+		GlobalUnlock(hClip);//释放类存快所有权 
+		SetClipboardData(CF_TEXT, hClip);//将文本放入剪贴板  
+
+		CloseClipboard();//关闭剪贴板 
+		return 1;
+	}
+	else
+	{
+		return 0;
 	}
 }

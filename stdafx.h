@@ -13,15 +13,15 @@ enum DL_remark
 	RE_Run,//下载创建
 	RE_OK,//下载成功
 		  //需要再次尝试
-		  RE_xunlei_error,//迅雷错误
-		  RE_Parse_error,//解析错误
-		  RE_Link_error,//链接不能下载
+	RE_xunlei_error,//迅雷错误
+	RE_Parse_error,//解析错误
+	RE_Link_error,//链接不能下载
 						//不再尝试
-						RE_Link_timeout,//链接超时
-						RE_Download_timeout,//下载超时
-						RE_xunlei_save_error,//迅雷存储错误
-						RE_URL_error,//链接不符合要求
-						RE_Download_repeat//重复下载
+	RE_Link_timeout,//链接超时
+	RE_Download_timeout,//下载超时
+	RE_xunlei_save_error,//迅雷存储错误
+	RE_URL_error,//链接不符合要求
+	RE_Download_repeat//重复下载
 };
 
 //---------------- struct ----------------------

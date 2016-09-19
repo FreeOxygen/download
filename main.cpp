@@ -24,6 +24,7 @@ int main()
 	{
 		url_info info;
 		int sumTask = getSumTask();//获得已经建立多少任务
+		cout << "********任务数：" << sumTask << endl;
 		if ((-1 != sumTask) && (sumTask < config.MaxTask))
 		{
 			if (read_url(info))
@@ -31,6 +32,7 @@ int main()
 				if (is_url_valid(info))//判断url是否有效
 				{
 					cout << info.url << endl;
+					Sleep(2000);
 					if (xunlei_add_url(info))
 					{
 						//成功建立下载
@@ -60,6 +62,7 @@ int main()
 					//得到一条url
 					while (get_again_URL(info))
 					{
+						Sleep(2000);
 						if (xunlei_add_url(info))
 						{
 							//成功建立下载

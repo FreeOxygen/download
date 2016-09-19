@@ -378,7 +378,7 @@ int get_RUN_row(url_info & info)
 		sscanf(row[0], "%d", &(info.DJID));
 		sscanf(row[1], "%s", info.filepath);
 		//strcpy(info.filepath, row[1]);
-		cout << row[0]<<"****查询==============>" << row[1] << endl;
+		cout << row[0] << "****查询==============>" << row[1] << endl;
 		return 1;
 	}
 	else
@@ -428,7 +428,7 @@ int get_againURL()
 		printf("%s executed!!!\n", sql);
 	}
 	int sumtask = getSumTask();
-	sprintf(sql, "select DJID,URL,PROTOCOL from %s where REMARK in( 'xunlei_error','Parse_error','Link_error') and RETRY_COUNT <= %d limit %d", config.tableName,config.MaxPetryCount,(config.MaxTask - sumtask-1));
+	sprintf(sql, "select DJID,URL,PROTOCOL from %s where (STATE ='DL_WAIT'OR REMARK in( 'xunlei_error','Parse_error','Link_error')) and RETRY_COUNT <= %d limit %d", config.tableName,config.MaxPetryCount,(config.MaxTask - sumtask-1));
 	rt = mysql_real_query(&con, sql, strlen(sql));
 	if (rt)
 	{
