@@ -376,9 +376,17 @@ int get_RUN_row(url_info & info)
 		char tmp[256];
 		strcpy(tmp, row[0]);
 		sscanf(row[0], "%d", &(info.DJID));
-		sscanf(row[1], "%s", info.filepath);
+		if (NULL != row[1]) 
+		{
+			sscanf(row[1], "%s", info.filepath);
+		}
+		else
+		{
+			cout << "DJID[" << row[0] << "]文件地址错误" << endl;
+			sscanf("1", "%s", info.filepath);
+		}
 		//strcpy(info.filepath, row[1]);
-		cout << row[0] << "****查询==============>" << row[1] << endl;
+		cout << info.DJID << "****查询==============>" << info.filepath << endl;
 		return 1;
 	}
 	else
@@ -517,7 +525,7 @@ int find_file(url_info & info, char * find_rule = "*")
 				{
 					rt++;//文件夹中有文件
 					//查询到文件
-					if (1)//可以判断文件后缀.torrent
+					if (0 != (strcmp(strrchr(findFile.name, '.'), ".torrent")))//可以判断文件后缀.torrent
 					{
 						strcpy(info.filename, findFile.name);//下载完成文件的名称
 						info.filesize = findFile.size;//文件的大小

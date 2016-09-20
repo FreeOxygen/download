@@ -104,410 +104,6 @@ int open_xunlei(char * xunleiPath)
 }
 
 /*
-模拟键盘输入
-value 输入的内容
-*/
-void keyboardInput(char* value)
-{
-	int i = 0;
-	int keyValue = 0;
-	while (value[i] != '\0')
-	{
-		if (value[i] >= 97 && value[i] <= 122)
-		{
-			keyValue = value[i] - 32;
-			keybd_event(keyValue, (BYTE)0, 0, 0);
-
-			keybd_event(keyValue, (BYTE)0, KEYEVENTF_KEYUP, 0);
-
-		}
-		else if (value[i] >= 65 && value[i] <= 90)
-		{
-
-			keyValue = value[i];
-			keybd_event(16, 0, 0, 0);
-			keybd_event(keyValue, (BYTE)0, 0, 0);
-
-			keybd_event(keyValue, (BYTE)0, KEYEVENTF_KEYUP, 0);
-			keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-
-		}
-		else
-		{
-
-
-			switch (value[i])
-			{
-			case ';':
-
-				keybd_event(186, 0, 0, 0);
-				keybd_event(186, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-			case ':':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(186, 0, 0, 0);
-				keybd_event(186, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-			case '/':
-				keybd_event(191, 0, 0, 0);
-				keybd_event(191, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-
-			case '?':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(191, 0, 0, 0);
-				keybd_event(191, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-			case '.':
-
-				keybd_event(190, 0, 0, 0);
-				keybd_event(190, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-			case '>':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(190, 0, 0, 0);
-				keybd_event(190, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-			case ',':
-
-				keybd_event(188, 0, 0, 0);
-				keybd_event(188, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '<':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(188, 0, 0, 0);
-				keybd_event(188, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-			case '\'':
-
-				keybd_event(222, 0, 0, 0);
-				keybd_event(222, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '"':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(222, 0, 0, 0);
-				keybd_event(222, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-			case '`':
-
-				keybd_event(222, 0, 0, 0);
-				keybd_event(222, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '~':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(192, 0, 0, 0);
-				keybd_event(192, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-
-			case '-':
-
-				keybd_event(189, 0, 0, 0);
-				keybd_event(189, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '_':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(189, 0, 0, 0);
-				keybd_event(189, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-
-
-			case '[':
-
-				keybd_event(219, 0, 0, 0);
-				keybd_event(219, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '{':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(219, 0, 0, 0);
-				keybd_event(219, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-			case ']':
-
-				keybd_event(221, 0, 0, 0);
-				keybd_event(221, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '}':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(221, 0, 0, 0);
-				keybd_event(221, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-
-
-			case '\\':
-
-				keybd_event(220, 0, 0, 0);
-				keybd_event(220, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '|':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(220, 0, 0, 0);
-				keybd_event(220, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-			case '=':
-
-				keybd_event(187, 0, 0, 0);
-				keybd_event(187, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '+':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(187, 0, 0, 0);
-				keybd_event(187, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-
-			case '0':
-
-				keybd_event(48, 0, 0, 0);
-				keybd_event(48, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case ')':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(48, 0, 0, 0);
-				keybd_event(48, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-			case '1':
-
-				keybd_event(49, 0, 0, 0);
-				keybd_event(49, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '!':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(49, 0, 0, 0);
-				keybd_event(49, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-			case '2':
-
-				keybd_event(50, 0, 0, 0);
-				keybd_event(50, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '@':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(50, 0, 0, 0);
-				keybd_event(50, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-			case '3':
-
-				keybd_event(51, 0, 0, 0);
-				keybd_event(51, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '#':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(51, 0, 0, 0);
-				keybd_event(51, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-
-
-			case '4':
-
-				keybd_event(52, 0, 0, 0);
-				keybd_event(52, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '$':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(52, 0, 0, 0);
-				keybd_event(52, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-			case '5':
-
-				keybd_event(53, 0, 0, 0);
-				keybd_event(53, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '%':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(53, 0, 0, 0);
-				keybd_event(53, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-			case '6':
-
-				keybd_event(54, 0, 0, 0);
-				keybd_event(54, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '^':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(54, 0, 0, 0);
-				keybd_event(54, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-			case '7':
-
-				keybd_event(55, 0, 0, 0);
-				keybd_event(55, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '&':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(55, 0, 0, 0);
-				keybd_event(55, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-
-			case '8':
-
-				keybd_event(56, 0, 0, 0);
-				keybd_event(56, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '*':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(56, 0, 0, 0);
-				keybd_event(56, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-			case '9':
-
-				keybd_event(57, 0, 0, 0);
-				keybd_event(57, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-
-
-			case '(':
-				keybd_event(16, 0, 0, 0);
-				keybd_event(57, 0, 0, 0);
-				keybd_event(57, 0, KEYEVENTF_KEYUP, 0);
-				keybd_event(16, 0, KEYEVENTF_KEYUP, 0);
-				break;
-
-
-
-			case '\n':
-
-				keybd_event(13, 0, 0, 0);
-				keybd_event(13, 0, KEYEVENTF_KEYUP, 0);
-
-				break;
-			}
-		}
-		i++;
-	}
-}
-
-/*
-获取活动窗口左上角相对于屏幕的坐标
-x 横坐标
-y 纵坐标
-*/
-void getPos(HWND h, int* x, int* y)
-{
-	int x1, x2, y1, y2;
-
-	// 获取屏幕鼠标坐标
-	POINT pt;
-	GetCursorPos(&pt);
-	x1 = pt.x;
-	y1 = pt.y;
-	ScreenToClient(h, &pt);
-	x2 = pt.x;
-	y2 = pt.y;
-
-	//获得窗口左上角坐标
-	*x = x1 - x2;
-	*y = y1 - y2;
-}
-
-/*
-获取得到焦点窗口的名称
-title 窗口的名称
-*/
-void getText(HWND h, char* title)
-{
-
-	// 获取窗口标题
-	char text[200];
-	GetWindowText(h, text, 200);
-	strcpy(title, text);
-
-}
-/*
 添加下载任务
 	info 读取到的URL地址的信息
 return 0添加错误 1 添加成功
@@ -566,6 +162,9 @@ int xunlei_add_url(url_info & info)
 
 		//资源解析错误
 		if (i == 1000) {
+			keybd_event(VK_ESCAPE, 0, 0, 0);//按下esc键退出新建下载
+			keybd_event(VK_ESCAPE, 0, KEYEVENTF_KEYUP, 0);
+			Sleep(1000);
 			info.state = DL_FAIL;//文件下载失败
 			info.remark = RE_Parse_error;//链接解析错误
 			cout << "种子下载失败" << endl;
@@ -689,11 +288,12 @@ int xunlei_add_url(url_info & info)
 		SetForegroundWindow(newHwnd);
 		write_Clip(info.url);//将url写入剪贴板
 		//ctrl + V
+
 		keybd_event(VK_CONTROL, 0, 0, 0);
 		keybd_event('V', 0, 0, 0);
 		keybd_event('V', 0, KEYEVENTF_KEYUP, 0);
 		keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
-		Sleep(1000);
+		//Sleep(1000);
 
 		//获得当前系统的时间，用于命名文件夹
 		SYSTEMTIME systim;
@@ -724,7 +324,7 @@ int xunlei_add_url(url_info & info)
 		strcat(info.start_time, ":");
 		strcat(info.start_time, strtok(NULL, "_"));//秒
 
-		for (int n = MAX_WAIT_ROUND; n < -1; n--)
+		for (int n = MAX_WAIT_ROUND; n > -1; n--)
 		{
 			if (waitForInput(newHwnd))
 			{
@@ -733,6 +333,9 @@ int xunlei_add_url(url_info & info)
 			if (0 == n)
 			{
 				//url 解析失败
+				keybd_event(VK_ESCAPE, 0, 0, 0);//按下esc键退出新建下载
+				keybd_event(VK_ESCAPE, 0, KEYEVENTF_KEYUP, 0);
+				Sleep(1000);
 				info.state = DL_FAIL;//文件下载失败
 				info.remark = RE_Link_error;
 				cout << "url 解析失败" << endl;
@@ -803,14 +406,15 @@ int waitForInput(HWND hwnd)
 
 	COLORREF color = GetPixel(wndDC, rect.left + 365, rect.top + 250);
 	ReleaseDC(NULL, wndDC);
-
+	cout << "------>" <<hex<<color<< endl;
 	if (0x1b4ff == color)//检测到橘黄色
 	{
-		return 0;
+		return 1;
 	}
-	return 1;
+	return 0;
 
 }
+
 //写剪贴板
 int write_Clip(char * buf)
 {
