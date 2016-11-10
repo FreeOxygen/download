@@ -15,9 +15,10 @@ const int MAX_WAIT_ROUND = 3;
 //-------------- gloable variable -------
 HWND g_hwnd;//打开迅雷的窗口句柄
 
+
+//-------------- functions --------------
 int write_Clip(char * buf);
 int waitForInput(HWND hwnd);
-//-------------- functions --------------
 struct ProcessWindow
 {
 	DWORD dwProcessId;
@@ -66,7 +67,7 @@ int open_xunlei(char * xunleiPath)
 		}
 		Sleep(1000);
 	} while (find_ROUND--);
-	
+
 	if (NULL == g_hwnd)
 	{
 		//迅雷没有启动
@@ -104,6 +105,57 @@ int open_xunlei(char * xunleiPath)
 }
 
 /*
+删除taskDb.dat
+*/
+int delete_TaskDb()
+{
+	char tmp1[256];
+	strncpy(tmp1, g_config.xunlei, strrchr(g_config.xunlei, '/') - g_config.xunlei);
+	char tmp2[256];
+	strncpy(tmp2, tmp1, strrchr(tmp1, '/') - tmp1);
+	cout << tmp2 << endl;
+	strcat(tmp2, "/Profiles/TaskDb.dat");
+	if (int i = remove(tmp2))
+	{
+		cout << "删除taskDb.dat错误" << endl;
+		return 0;
+	}
+	else
+	{
+		return 1;
+	}
+}
+
+/*
+关闭迅雷
+*/
+int close_xunlei()
+{
+	HANDLE hProcessHandle;
+	ULONG nProcessID;
+	GetWindowThreadProcessId(g_hwnd, &nProcessID);
+	hProcessHandle = OpenProcess(PROCESS_TERMINATE, FALSE, nProcessID);
+	TerminateProcess(hProcessHandle, 4);
+	int n = MAX_WAIT_ROUND;
+	for (n = MAX_WAIT_ROUND; n > 0; n--)
+	{
+		Sleep(2000);
+		if (delete_TaskDb())
+		{
+			break;
+		}
+	}
+	if (0 >= n)
+	{
+		return 0;
+	}
+	else
+	{
+		return 1;
+	}
+}
+
+/*
 添加下载任务
 	info 读取到的URL地址的信息
 return 0添加错误 1 添加成功
@@ -120,7 +172,7 @@ int xunlei_add_url(url_info & info)
 	}
 
 	//磁力链接
-	if (info.protocol == magnet)
+	if ((info.protocol == magnet) || (info.protocol == thunder))
 	{
 		SetForegroundWindow(g_hwnd);
 		PostMessage(g_hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(36, 73));//点击新建按键
@@ -155,13 +207,13 @@ int xunlei_add_url(url_info & info)
 
 		HWND hwnd_NewBT = NULL;
 		int i;
-		for (i = 0; hwnd_NewBT == NULL&&i < 500; i++) {
+		for (i = 0; hwnd_NewBT == NULL&&i < 120; i++) {
 			hwnd_NewBT = FindWindow(NULL, "新建BT任务");
 			Sleep(1000);
 		}
 
 		//资源解析错误
-		if (i == 1000) {
+		if (i == 120) {
 			keybd_event(VK_ESCAPE, 0, 0, 0);//按下esc键退出新建下载
 			keybd_event(VK_ESCAPE, 0, KEYEVENTF_KEYUP, 0);
 			Sleep(1000);
@@ -187,9 +239,13 @@ int xunlei_add_url(url_info & info)
 			sptk += sprintf(savepath + sptk, "%03d", systim.wMilliseconds);
 			cout << "this is important" << savepath << endl;
 
-			char path[255];
-			strcpy(path, config.savePath);//获得保存的文件地址
+			char path[1024];
+			char db_path[1024];
+			strcpy(db_path, g_config.relativePath);
+			strcat(db_path, "/");
+			strcat(db_path, savepath);
 
+			strcpy(path, g_config.savePath);//获得保存的文件地址
 			strcat(path, "/");
 			strcat(path, savepath);//存储的地址
 			strtok(savepath, "_");
@@ -218,11 +274,18 @@ int xunlei_add_url(url_info & info)
 			keybd_event('V', 0, KEYEVENTF_KEYUP, 0);
 			keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
 
-			Sleep(1000);//等待输入完成
-			PostMessage(hwnd_NewBT, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(155, 531));//点击下载按键
-			PostMessage(hwnd_NewBT, WM_LBUTTONUP, MK_LBUTTON, MAKELPARAM(155, 531));
-
+			Sleep(2000);//等待输入完成
+			//RECT rect;
+			//GetWindowRect(hwnd_NewBT, (LPRECT)&rect);
+			//PostMessage(hwnd_NewBT, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(250, 560));//点击下载按键
+			//PostMessage(hwnd_NewBT, WM_LBUTTONUP, MK_LBUTTON, MAKELPARAM(250, 560));
 			//下载链接错误
+			keybd_event(VK_TAB, 0, 0, 0);
+			keybd_event(VK_TAB, 0, KEYEVENTF_KEYUP, 0);
+			keybd_event(VK_TAB, 0, 0, 0);
+			keybd_event(VK_TAB, 0, KEYEVENTF_KEYUP, 0);
+			keybd_event(VK_RETURN, 0, 0, 0);
+			keybd_event(VK_RETURN, 0, KEYEVENTF_KEYUP, 0);
 			int wait_cont = MAX_WAIT_ROUND;
 			while (IsWindowVisible(hwnd_NewBT) || IsWindowVisible(FindWindow("XLUEModalHostWnd", "MessageBox")))
 			{
@@ -250,7 +313,7 @@ int xunlei_add_url(url_info & info)
 			}
 
 			info.state = DL_RUN;//状态正在下载
-			strcpy(info.filepath, path);
+			strcpy(info.filepath, db_path);
 			info.remark = RE_Run;
 			return 1;
 
@@ -310,11 +373,16 @@ int xunlei_add_url(url_info & info)
 		sptk += sprintf(savepath + sptk, "%03d", systim.wMilliseconds);
 		cout << "this is important" << savepath << endl;
 
-		char path[255];
-		strcpy(path, config.savePath);//获得保存的文件地址
+		char path[1024];
+		char db_path[1024];
+		strcpy(db_path, g_config.relativePath);//获得保存的文件地址
+		strcat(db_path, "/");
+		strcat(db_path, savepath);//存储的地址
 
+		strcpy(path, g_config.savePath);//获得保存的文件地址
 		strcat(path, "/");
 		strcat(path, savepath);//存储的地址
+
 		strtok(savepath, "_");
 		strcpy(info.start_time, savepath);//年月日
 		strcat(info.start_time, " ");
@@ -378,6 +446,12 @@ int xunlei_add_url(url_info & info)
 					info.state = DL_FAIL;//文件下载失败
 					info.remark = RE_Download_repeat;
 				}
+				else
+				{
+					info.state = DL_FAIL;//文件下载失败
+					info.remark = RE_Link_error;
+					cout << "url 解析失败" << endl;
+				}
 				keybd_event(VK_ESCAPE, 0, 0, 0);//按下esc键退出新建下载
 				keybd_event(VK_ESCAPE, 0, KEYEVENTF_KEYUP, 0);
 				Sleep(1000);
@@ -388,7 +462,7 @@ int xunlei_add_url(url_info & info)
 			wait_cont--;
 		}
 		info.state = DL_RUN;//状态正在下载
-		strcpy(info.filepath, path);
+		strcpy(info.filepath, db_path);
 		info.remark = RE_Run;
 
 		return 1;
@@ -406,7 +480,7 @@ int waitForInput(HWND hwnd)
 
 	COLORREF color = GetPixel(wndDC, rect.left + 365, rect.top + 250);
 	ReleaseDC(NULL, wndDC);
-	cout << "------>" <<hex<<color<< endl;
+	cout << "------>" << hex << color << endl;
 	if (0x1b4ff == color)//检测到橘黄色
 	{
 		return 1;
@@ -414,7 +488,6 @@ int waitForInput(HWND hwnd)
 	return 0;
 
 }
-
 //写剪贴板
 int write_Clip(char * buf)
 {

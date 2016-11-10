@@ -1,0 +1,16 @@
+﻿xunlei=D:/xunlei/Program/Thunder.exe
+urlPath=./url/
+savePath=F:/1test
+http_mold=^(http://).*(\.\w+)+
+https_mold=^(https://).*(\.\w+)+
+ftp_mold=ftp://[^\s]*
+magnet_mold=magnet:\?xt=urn:btih:[^\s]*
+ED2K_mold=(ed2k://\|file\|){1}.*
+user=root
+passwd=liyi950229
+host=localhost
+dbName=ecd_db
+tableName=ecd_dl_job
+timeout_time=600
+MaxTask=20
+MaxPetryCount=4

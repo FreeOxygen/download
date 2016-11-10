@@ -15,72 +15,89 @@ using namespace std;
 int main()
 {
 	init_config();//初始化配置参数
-	open_xunlei(config.xunlei);
-	cout << "迅雷启动成功" << endl;
-	initMysql();
+	open_xunlei(g_config.xunlei);//启动迅雷
 
-	int i = 0;
 	while (1) //检测文件是否下载完成
 	{
-		url_info info;
-		int sumTask = getSumTask();//获得已经建立多少任务
-		cout << "********任务数：" << sumTask << endl;
-		if ((-1 != sumTask) && (sumTask < config.MaxTask))
+		if (open_Mysql())
 		{
-			if (read_url(info))
+			url_info info;
+			update_state();//更新数据库状态
+			int sumTask = getSumTask();//获得已经建立多少任务
+			int ErrSumTask = getErrSumTask();//获得不能下载的的任务
+			if ((g_config.MaxTask * 3 / 4) >= ErrSumTask)//当错误的任务数量大于总任务数的一半
 			{
-				if (is_url_valid(info))//判断url是否有效
+				cout << "********迅雷现在的任务数：" << sumTask << endl;
+				if ((-1 != sumTask) && (sumTask < g_config.MaxTask))
 				{
-					cout << info.url << endl;
-					Sleep(2000);
-					if (xunlei_add_url(info))
+					if (read_url(info))
 					{
-						//成功建立下载
-						//filepath;protocol;remark;start_time;state;tool;url;
-						update_Success_url(info);
+						if (is_url_valid(info))//判断url是否有效
+						{
+							cout << info.url << endl;
+							if (xunlei_add_url(info))
+							{
+								//成功建立下载
+								//filepath;protocol;remark;start_time;state;tool;url;
+								update_Success_url(info);
+							}
+							else
+							{
+								//建立连接错误
+								//protocol;remark;state;tool;url;
+								update_Error_url(info);
+							}
+						}
+						//URL是不符合要求的
+						else
+						{
+							info.state = DL_FAIL;
+							info.remark = RE_URL_error;
+							update_Error_url(info);
+						}
 					}
 					else
 					{
-						//建立连接错误
-						//protocol;remark;state;tool;url;
-						update_Error_url(info);
+						//读取数据库中可以再次尝试的连接
+						if (get_againURL())
+						{
+							//得到一条url
+							while (get_again_URL(info))
+							{
+								if (xunlei_add_url(info))
+								{
+									//成功建立下载
+									//filepath;protocol;remark;start_time;state;tool;url;
+									update_AgainSuccess_url(info);
+								}
+								else
+								{
+									//建立连接错误
+									//protocol;remark;state;tool;url;
+									update_AgainError_url(info);
+								}
+								Sleep(1000);
+							}
+						}
 					}
-				}
-				//URL是不符合要求的
-				else
-				{
-					info.state = DL_FAIL;
-					info.remark = RE_URL_error;
-					update_Error_url(info);
 				}
 			}
 			else
 			{
-				//读取数据库中可以再次尝试的连接
-				if (get_againURL())
+				//错误任务数量过多
+				if (sumTask == ErrSumTask)
 				{
-					//得到一条url
-					while (get_again_URL(info))
+					//没有正在下载的任务
+					if (close_xunlei())
 					{
-						Sleep(2000);
-						if (xunlei_add_url(info))
-						{
-							//成功建立下载
-							//filepath;protocol;remark;start_time;state;tool;url;
-							update_AgainSuccess_url(info);
-						}
-						else
-						{
-							//建立连接错误
-							//protocol;remark;state;tool;url;
-							update_AgainError_url(info);
-						}
+						open_xunlei(g_config.xunlei);
+						update_errSatk_state();
 					}
 				}
 			}
+			close_Mysql();//关闭数据库连接
 		}
-		update_state();
-		Sleep(2000);
+		Sleep(g_config.WaitTime);
 	}
 	return 0;
 }

@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <io.h>
-#include <regex>
 #include "urlOper.h"
 using namespace std;
 
@@ -30,7 +29,7 @@ int open_urlFile(char* fileName)
 	else
 	{
 		strcpy(filename, fileName);
-		cout << "url文件:" << fileName << "--打开成功!" << endl;
+		cout << "url文件:" << fileName << "-->打开成功!" << endl;
 		return 1;
 	}
 }
@@ -96,7 +95,6 @@ int read_url(url_info & readUrl_info)
 		if (!fin.eof())
 		{
 			fin.getline(buffer, 1024);
-			readUrl_info.DJID = i;
 			readUrl_info.JID = i++;
 			strcpy(readUrl_info.url, buffer);
 			return 1;
@@ -106,7 +104,7 @@ int read_url(url_info & readUrl_info)
 			//删除文件
 			fin.close();
 			remove(filename);//删除已经读取完成的文件
-			if (find_new_file(config.urlPath))//查找新的文件
+			if (find_new_file(g_config.urlPath))//查找新的文件
 			{
 				url_info tmpinfo;
 				if (read_url(tmpinfo))
@@ -127,7 +125,7 @@ int read_url(url_info & readUrl_info)
 	}
 	else
 	{
-		if (find_new_file(config.urlPath))//查找新的文件
+		if (find_new_file(g_config.urlPath))//查找新的文件
 		{
 			url_info tmpinfo;
 			if (read_url(tmpinfo))
@@ -145,54 +143,5 @@ int read_url(url_info & readUrl_info)
 		{
 			return 0;
 		}
-	}
-}
-
-/*
-判断URL是否表达式
-修改info的信息
-*/
-bool is_url_valid(url_info & info)
-{
-	regex http_Mold(config.http_mold);//config.url_mold_1);//"^(http://).*(\\.\\w+)+");//http协议下载
-	regex https_Mold(config.https_mold);
-	regex ftp_Mold(config.ftp_mold);//"ftp://[^\\s]*");//ftp协议下载
-	regex magnet_Mold(config.magnet_mold);//"magnet:\\?xt=urn:btih:[^\\s]*");//磁力链接下载
-	regex ED2K_Mold(config.ED2K_mold);//"(ed2k://\\|file\\|){1}.*");//电驴格式下载
-	switch (1)//进行判断url是否满足允许的协议
-	{
-	case 1:
-		if (regex_match(info.url, http_Mold))
-		{
-			info.protocol = http;
-			return true;
-		}
-	case 2:
-		if (regex_match(info.url, https_Mold))
-		{
-			info.protocol = https;
-			return true;
-		}
-	case 3:
-		if (regex_match(info.url, ftp_Mold))
-		{
-			info.protocol = ftp;
-			return true;
-		}
-	case 4:
-		if (regex_match(info.url, magnet_Mold))
-		{
-			info.protocol = magnet;
-			return true;
-		}
-	case 5:
-		if (regex_match(info.url, ED2K_Mold))
-		{
-			info.protocol = ED2K;
-			return true;
-		}
-	default:
-		info.protocol = Err;
-		return false;
 	}
 }
